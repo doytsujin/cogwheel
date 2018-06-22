@@ -1,0 +1,33 @@
+body {
+    overflow-x: hidden;
+}
+
+a {
+    cursor: pointer;
+}
+
+/* #splash inlined */
+#splash.hidden {
+    transition: opacity 0.2s, background-color 0.2s, transform 0.2s;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.1);
+}
+
+#main {
+    display: flex;
+    flex-direction: row;
+    min-height: 100vh;
+}
+#main > .section {
+    flex: 1 1 auto;
+    padding: 32px;
+}
+#main-divider {
+    width: 4px;
+    padding: 0;
+    cursor: ew-resize;
+    user-select: none;
+    flex: 0 0 auto;
+    background: #222222;
+}
