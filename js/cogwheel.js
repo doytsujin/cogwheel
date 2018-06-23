@@ -1,6 +1,5 @@
 //@ts-check
 class Cogwheel {
-
     constructor() {
         this.main = document.getElementById("main");
         this.mainEditor = document.getElementById("main-editor");
@@ -39,10 +38,4 @@ class Cogwheel {
 
 }
 
-/** @type {Cogwheel} */
-var cogwheel = null;
-lazyman.load("DOM").then(() => {
-    cogwheel = window["cogwheel"] = new Cogwheel();
-    setTimeout(() => document.getElementById("splash").classList.add("hidden"), 300);
-});
-
+var cogwheel = window["cogwheel"] = new Cogwheel();

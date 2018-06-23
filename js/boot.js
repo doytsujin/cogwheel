@@ -1,12 +1,9 @@
 //@ts-check
-(async () => {
+(() => {
     console.log("[cogwheel.boot]", "Loading Cogwheel and all dependencies.");
 
-    lazyman.prefixes["css"] = "./css/";
-    lazyman.prefixes["js"] = "./js/";
-
-    // Core dependencies.
-    await lazyman.all([
+    /** @type {any[]} */
+    let deps = [
         "rdom.js",
 
         // https://github.com/nodeca/js-yaml
@@ -22,13 +19,55 @@
 
         "cogwheel.css",
         "cogwheel.utils.js",
-    ]);
-    console.log("[cogwheel.boot]", "Core dependencies loaded.");
-
-    // Cogwheel and other weak dependencies.
-    await lazyman.all([
+    ];
+    /** @type {any[]} */
+    let core = [
         "cogwheel.js",
-    ]);
+    ];
 
-    console.log("[cogwheel.boot]", "Cogwheel loaded.");
+    /** @type {Set<string>} */
+    let loaded = new Set();
+    /** @type {Set<string>} */
+    let failed = new Set();
+
+    let splash;
+    let splashProgressBar;
+
+    // Update the splash screen's progress bar.
+    let updateProgress = (id, success) => {
+        console.log("[cogwheel.boot]", id, success ? "loaded." : "failed loading!");
+        (success ? loaded : failed).add(id);
+        splashProgressBar.style.transform = `scaleX(${loaded.size / (deps.length + core.length)})`;
+    }
+
+    // Wrapper around lazyman.all which runs updateProgress.
+    let load = deps => lazyman.all(
+        deps,
+        // Resolve
+        id => updateProgress(id, true),
+        // Reject
+        id => updateProgress(id, false)
+    );
+
+    fasync(() => {
+        console.log("[cogwheel.boot]", "Waiting until DOM ready.");
+    }, /*async*/ () => lazyman.load("DOM"), () => {
+        console.log("[cogwheel.boot]", "DOM ready.");
+
+        splash = document.getElementById("splash");
+        splashProgressBar = document.getElementById("splash-progress-bar");
+    
+        lazyman.prefixes["css"] = "./css/";
+        lazyman.prefixes["js"] = "./js/";
+
+    }, /*async*/ () => load(deps), () => {
+        console.log("[cogwheel.boot]", "Core dependencies loaded.");
+
+    }, /*async*/ () => load(core), () => {
+        console.log("[cogwheel.boot]", "Cogwheel loaded.");
+
+        setTimeout(() => {
+            splash.classList.add("hidden");
+        }, 300);
+    });
 })();
