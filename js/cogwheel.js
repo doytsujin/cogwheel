@@ -1,14 +1,19 @@
 //@ts-check
+
+// Work around @ts-check not knowing about globals.
+var hljs = hljs;
+
 class Cogwheel {
     constructor() {
         this.main = document.getElementById("main");
         this.mainEditor = document.getElementById("main-editor");
         this.mainDivider = document.getElementById("main-divider");
         this.mainYaml = document.getElementById("main-yaml");
-        this.mainCode = document.getElementById("main-yaml-code");
+        this.mainCodeWrap = document.getElementById("main-yaml-code-wrap");
         this.mainYaml.addEventListener("submit", () => false, false);
 
         this.registerDividerH(this.mainEditor, this.mainDivider);
+        this.registerCodeArea(this.mainCodeWrap);
     }
 
     /**
@@ -49,6 +54,52 @@ class Cogwheel {
             divider.classList.remove("dragging");
             isDraggingDivider = false;
             lastWidth = width;
+        });
+    }
+
+    /**
+     * @param {HTMLElement} codeWrap
+     */
+    registerCodeArea(codeWrap) {
+        let wasEditing = false;
+        let isEditing = false;
+
+        document.addEventListener("click", e => {
+            let target = e.target;
+            while (target && target !== codeWrap)
+                // @ts-ignore
+                target = target.parentElement;
+            wasEditing = isEditing;
+            isEditing = target === codeWrap;
+
+            if (wasEditing == isEditing)
+                return;
+
+            if (isEditing) {
+                codeWrap.classList.add("editing");
+
+                let code = codeWrap.firstElementChild;
+                let codeArea = document.createElement("textarea");
+                codeArea.id = code.id;
+                for (let i = 0; i < code.classList.length; i++)
+                    codeArea.classList.add(code.classList[i]);
+                // @ts-ignore
+                codeArea.value = code.innerText;
+                codeWrap.replaceChild(codeArea, code);
+                
+            } else {
+                codeWrap.classList.remove("editing");
+
+                let codeArea = codeWrap.firstElementChild;
+                let code = document.createElement("code");
+                code.id = codeArea.id;
+                for (let i = 0; i < codeArea.classList.length; i++)
+                    code.classList.add(codeArea.classList[i]);
+                // @ts-ignore
+                code.innerHTML = escapeHTML(codeArea.value);
+                codeWrap.replaceChild(code, codeArea);
+                hljs.highlightBlock(code);
+            }
         });
     }
 
