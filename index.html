@@ -100,7 +100,29 @@
                     <button>Load</button>
                     <button>?</button>
                 </div>
-                <textarea id="main-yaml-text"></textarea>
+                <pre><code class="yaml" id="main-yaml-code"># This is just an example.
+
+# Graphics/Atlases/Gui/{...}.png
+Icon: areas/core
+
+# Respawn, WalkInRight, WalkInLeft, Jump, WakeUp
+IntroType: WakeUp
+# None, Hot, Cold
+CoreMode: Hot
+
+Modes:
+    # Side A
+    - Path: ~
+    # Default, CH6End, Core, OldSite, Prologue, TheSummit
+    Inventory: Core
+    HeartIsEnd: true
+    
+    # Side B:
+    - Path: ~
+    
+    # Side C:
+    - Path: ~
+                </code></pre>
             </form>
         </div>
     </body>

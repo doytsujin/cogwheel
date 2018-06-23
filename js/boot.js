@@ -64,6 +64,8 @@
     }, /*async*/ () => load(core), () => {
         console.log("[cogwheel.boot]", "Cogwheel loaded.");
 
+        window["hljs"].initHighlightingOnLoad();
+
         setTimeout(() => {
             splash.classList.add("hidden");
         }, 200);

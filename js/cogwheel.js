@@ -5,6 +5,7 @@ class Cogwheel {
         this.mainEditor = document.getElementById("main-editor");
         this.mainDivider = document.getElementById("main-divider");
         this.mainYaml = document.getElementById("main-yaml");
+        this.mainCode = document.getElementById("main-yaml-code");
         this.mainYaml.addEventListener("submit", () => false, false);
 
         this.registerDividerH(this.mainEditor, this.mainDivider);
