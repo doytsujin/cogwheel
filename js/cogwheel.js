@@ -7,32 +7,47 @@ class Cogwheel {
         this.mainYaml = document.getElementById("main-yaml");
         this.mainYaml.addEventListener("submit", () => false, false);
 
-        this.registerDivider();
+        this.registerDividerH(this.mainEditor, this.mainDivider);
     }
 
-    registerDivider() {
+    /**
+     * @param {HTMLElement} main
+     * @param {HTMLElement} divider
+     */
+    registerDividerH(main, divider) {
         let isDraggingDivider = false;
+        let dragStart;
+        let lastWidth = main.getBoundingClientRect().width;
+        let width;
+
+        main.style.width = `${lastWidth}px`;
+        main.style.flexGrow = "0";
 
         document.addEventListener("mousedown", e => {
-            if (!(isDraggingDivider = e.target === this.mainDivider))
+            if (!(isDraggingDivider = e.target === divider))
                 return;
+            e.preventDefault();
             
-            e.preventDefault();            
+            divider.classList.add("dragging");
+            dragStart = e.pageX;
         });
         
         document.addEventListener("mousemove", e => {
             if (!isDraggingDivider)
                 return;
-            
             e.preventDefault();
-            this.mainEditor.style.width = `${((e.clientX - this.main.offsetLeft) - 4 / 2)}px`;
-            this.mainEditor.style.flexGrow = "0";
+
+            width = lastWidth + e.pageX - dragStart;
+            
+            main.style.width = `${width}px`;
         });
         
         document.addEventListener("mouseup", e => {
             if (isDraggingDivider)
                 e.preventDefault();
+            divider.classList.remove("dragging");
             isDraggingDivider = false;
+            lastWidth = width;
         });
     }
 

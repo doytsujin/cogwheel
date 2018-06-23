@@ -9,10 +9,6 @@
         // https://github.com/nodeca/js-yaml
         "ext/js-yaml.min.js",
 
-        // https://materializecss.com/
-        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js",
-
         // https://highlightjs.org/
         [ "highlight/default.css", "ext/highlight/default.css"],
         "ext/highlight.pack.js",
@@ -30,7 +26,9 @@
     /** @type {Set<string>} */
     let failed = new Set();
 
+    /** @type {HTMLElement} */
     let splash;
+    /** @type {HTMLElement} */
     let splashProgressBar;
 
     // Update the splash screen's progress bar.
@@ -68,6 +66,9 @@
 
         setTimeout(() => {
             splash.classList.add("hidden");
-        }, 300);
+        }, 200);
+        setTimeout(() => {
+            splash.remove();
+        }, 1000);
     });
 })();

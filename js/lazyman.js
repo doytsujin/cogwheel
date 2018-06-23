@@ -2,7 +2,6 @@
 
 /* LazyMan - quick and dirty dependency manager.
 Best explained with the following code example:
-****
 
 // Set the default prefixes.
 lazyman.prefixes["css"] = "./css/";
@@ -67,8 +66,10 @@ class LazyMan {
          */
         this.loaders = {
             "DOM": (id, url) => {
-                if (document.readyState == "complete")
-                    this.resolve(id);
+                if (typeof(document) === "undefined")
+                    throw new Error("No DOM!")
+                if (document.readyState === "complete")
+                    this.resolve(id, document);
             },
 
             "css": (id, url) => {
@@ -76,13 +77,9 @@ class LazyMan {
                 style.type = "text/css";
                 style.rel = "stylesheet";
                 style.href = url;
-                style.addEventListener("load", () => this.resolve(id), false);
+                style.addEventListener("load", () => this.resolve(id, style), false);
                 style.addEventListener("error", () => this.reject(id), false);
-                try {
-                    document.head.appendChild(style);
-                } catch (e) {
-                    this.reject(id, e);
-                }
+                document.head.appendChild(style);
             },
 
             "js": (id, url) => {
@@ -91,13 +88,9 @@ class LazyMan {
                 script.src = url;
                 script.async = true;
                 script.defer = true;
-                script.addEventListener("load", () => this.resolve(id), false);
+                script.addEventListener("load", () => this.resolve(id, script), false);
                 script.addEventListener("error", () => this.reject(id), false);
-                try {
-                    document.head.appendChild(script);
-                } catch (e) {
-                    this.reject(id, e);
-                }
+                document.head.appendChild(script);
             },
         };
     }
@@ -140,7 +133,11 @@ class LazyMan {
                 this.reject(id, new Error(`No loader for type ${type}`));
                 return;
             }
-            loader(id, url, type);
+            try {
+                loader(id, url, type);
+            } catch (e) {
+                this.reject(id, e);
+            }
         });
     }
 
@@ -219,4 +216,8 @@ class LazyMan {
 
 var lazyman = window["lazyman"] = new LazyMan();
 lazyman.resolve("lazyman.js");
-document.addEventListener("DOMContentLoaded", () => lazyman.resolve("DOM"), false);
+// @ts-ignore
+if (typeof(document) != "undefined") {
+// @ts-ignore
+    document.addEventListener("DOMContentLoaded", () => lazyman.resolve("DOM"), false);
+}
