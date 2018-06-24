@@ -1,3 +1,10 @@
+// MS Edge from 2016 lacks this.
+String.prototype.trimEnd = String.prototype.trimEnd || String.prototype.trimRight || function() {
+    let end = this.length - 1;
+    for (; end > -1 && this[end].trim().length === 0; --end);
+    return this.slice(0, end);
+};
+
 // Escapes the string into a HTML - safe format.
 function escapeHTML(m) {
     if (!m)
@@ -46,13 +53,6 @@ function escapeAttr(m) {
     
     return n;
 }
-
-function genCall() {
-    var f = arguments[0];
-    var args = Array.from(arguments);
-    args.splice(0, 1);
-    return () => f.apply(this, args);
-};
 
 /**
  * @param {HTMLElement} main

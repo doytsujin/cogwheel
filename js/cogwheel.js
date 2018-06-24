@@ -6,6 +6,8 @@ var jsyaml = jsyaml;
 class CogwheelFormat {
     constructor(yaml) {
         this.yaml = yaml;
+        this.comments = {}
+
         this.example = "";
 
         // _*: comment
@@ -17,7 +19,7 @@ class CogwheelFormat {
             this.example += "\n";
         }
 
-        let crawl = (yaml, example) => {
+        let crawl = (yaml, comments) => {
             for (let key in yaml) {
                 if (key[0] === "_")
                     continue;
@@ -43,7 +45,7 @@ class CogwheelFormat {
             }
         }
 
-        crawl(this.yaml, this.example);
+        crawl(this.yaml, this.comments);
     }
 }
 

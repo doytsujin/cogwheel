@@ -16,7 +16,7 @@ yasync(function*() {
     let loaded = new Set();
     let failed = new Set();
 
-    let deps = [
+    let depsBase = [
         "utils/rdom.js",
 
         // https://github.com/nodeca/js-yaml
@@ -27,17 +27,18 @@ yasync(function*() {
         "https://code.getmdl.io/1.3.0/material.indigo-pink.min.css",
         "https://code.getmdl.io/1.3.0/material.min.js",
 
-        // https://github.com/Microsoft/monaco-editor/blob/master/docs/integrate-amd-cross.md
-        // https://cdnjs.com/libraries/monaco-editor
-        [ "monaco-editor/loader.js", monacoVS + "/loader.js" ],
-
         "cogwheel.css",
         "cogwheel.utils.js",
     ];
+    let depsMonaco = [
+        // https://github.com/Microsoft/monaco-editor/blob/master/docs/integrate-amd-cross.md
+        // https://cdnjs.com/libraries/monaco-editor
+        [ "monaco-editor/loader.js", monacoVS + "/loader.js" ],
+    ]
     let core = [
         "cogwheel.js",
     ];
-    let depsLength = deps.length + core.length;
+    let depsLength = depsBase.length + depsMonaco.length + core.length;
 
     // Update the splash screen's progress bar.
     let updateProgress = (id, success) => {
@@ -59,8 +60,11 @@ yasync(function*() {
     );
 
     console.log("[boot]", "Loading Cogwheel and all dependencies.");
-    yield load(deps);
+    yield load(depsBase);
     console.log("[boot]", "Base dependencies loaded.");
+    // Load monaco late because it defines define.amd, which breaks jsyaml on Chrome.
+    yield load(depsMonaco);
+    console.log("[boot]", "Monaco loader loaded.");
 
     // @ts-ignore
     require.config({ paths: { "vs": monacoVS }});
