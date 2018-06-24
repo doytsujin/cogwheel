@@ -1,7 +1,21 @@
 //@ts-check
 
 // Work around @ts-check not knowing about globals.
-var M = M;
+var jsyaml = jsyaml;
+
+class CogwheelSession {
+    constructor(yamlText) {
+        this.yamlText = yamlText || "";
+        this._yamlTextLast = null;
+        this._yamlObjLast = {};
+    }
+
+    get yamlObj() {
+        if (this._yamlTextLast === this.yamlText)
+            return this._yamlObjLast;
+        this._yamlObjLast = jsyaml.load(this._yamlTextLast = this.yamlText);
+    }
+}
 
 class Cogwheel {
     constructor() {
@@ -11,55 +25,50 @@ class Cogwheel {
         this.elCode = document.getElementById("code");
 
         // Initialize the divider before anything else to prevent the layout from changing.
-        this.registerDividerH(this.elExtra, this.elExtraDivider, true);
+        registerDividerH(this.elExtra, this.elExtraDivider, true, () => {
+            this.monacoEditor.layout();
+        });
 
         // Initialize Monaco editor.
-        this.monacoModel = monaco.editor.createModel("", "yaml");
+        this.monacoModel = monaco.editor.createModel(``, "yaml");
         this.monacoEditor = monaco.editor.create(this.elCode, {
             model: this.monacoModel
         });
 
         // Initialize our own custom elements.
         // ...
+
+        // Load example.
+        // TODO: Resume last session instead.
+        this.loadSessionRemote("examples/Default.meta.yaml");
+        this._session = new CogwheelSession();
+    }
+
+    get session() {
+        return this._session;
+    }
+    set session(value) {
+        this._session = value;
+        this.monacoModel = monaco.editor.createModel(this._session.yamlText, "yaml");
+        this.monacoEditor.setModel(this.monacoModel);
+    }
+
+    loadSessionRemote(url) {
+        return fasync(
+            () => {
+                this.session = new CogwheelSession(`Loading: "${url}"`);
+            }, /*await */ () => lazyman.load(url, "", "txt"), text => {
+                this.session = new CogwheelSession(text);
+            }
+        );
     }
 
     /**
-     * @param {HTMLElement} main
-     * @param {HTMLElement} divider
+     * 
+     * @param {string} text The .meta.yaml in text format.
      */
-    registerDividerH(main, divider, flip) {
-        let isDraggingDivider = false;
-        let dragStart;
-        let lastWidth;
-
-        main.style.width = `${main.getBoundingClientRect().width}px`;
-        main.style.flexGrow = "0";
-
-        document.addEventListener("mousedown", e => {
-            if (!(isDraggingDivider = e.target === divider))
-                return;
-            e.preventDefault();
-            
-            lastWidth = main.getBoundingClientRect().width;
-            divider.classList.add("dragging");
-            dragStart = e.pageX;
-        });
+    loadMeta(text) {
         
-        document.addEventListener("mousemove", e => {
-            if (!isDraggingDivider)
-                return;
-            e.preventDefault();
-
-            main.style.width = `${lastWidth + (flip ? -1 : 1) * (e.pageX - dragStart)}px`;
-            this.monacoEditor.layout();
-        });
-        
-        document.addEventListener("mouseup", e => {
-            if (isDraggingDivider)
-                e.preventDefault();
-            divider.classList.remove("dragging");
-            isDraggingDivider = false;
-        });
     }
 
 }

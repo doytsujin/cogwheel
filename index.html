@@ -37,14 +37,22 @@
             }
             #splash-cogwheel::before {
                 background-image: url("./splash/hq/cogwheel-part.png");
-                animation: cog-spin 2s infinite linear;
+                animation: cog-spin-a 2s infinite linear forwards;
             }
             #splash-cogwheel::after {
                 background-image: url("./splash/hq/cogwheel-part.png");
-                animation: cog-spin 2s -0.25s infinite linear;
+                animation: cog-spin-b 2s infinite linear forwards;
             }
             #splash::after {
                 background-image: url("./splash/hq/cogwheel-hole.png");
+            }
+            @keyframes cog-spin-a {
+                0%   { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes cog-spin-b {
+                0%   { transform: rotate(45deg); }
+                100% { transform: rotate(405deg); }
             }
             #splash-progress {
                 position: fixed;
@@ -56,7 +64,7 @@
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
             }
             #splash-progress-bar {
-                transition: transform 0.2s;
+                transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -66,9 +74,15 @@
                 box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
                 transform: scaleX(0);
             }
-            @keyframes cog-spin {
-                0%   { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+            #splash.failed #splash-cogwheel::before,
+            #splash.failed #splash-cogwheel::after {
+                animation-duration: -0.5s;
+                animation-timing-function: ease-out;
+                animation-iteration-count: 1;
+            }
+            #splash.failed #splash-progress-bar {
+                background: rgba(255, 31, 63, 1);
+                box-shadow: 0 0 24px rgba(255, 31, 63, 0.8);
             }
         </style>
 
@@ -98,11 +112,11 @@
                         <button id="menu-file-btn" class="mdl-button mdl-js-button">File</button>
                         <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
                             for="menu-file-btn">
-                            <li class="mdl-menu__item"><i class="material-icons">create</i>New</li>
-                            <li class="mdl-menu__item"><i class="material-icons">folder_open</i>Open</li>
-                            <li class="mdl-menu__item" disabled><i class="material-icons">save</i>Save</li>
-                            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider"><i class="material-icons">save_alt</i>Save As...</li>
-                            <li class="mdl-menu__item">What Even</li>
+                            <li class="mdl-menu__item" onclick="cogwheel.new()"><i class="material-icons">create</i>New</li>
+                            <li class="mdl-menu__item" onclick="cogwheel.open()"><i class="material-icons">folder_open</i>Open</li>
+                            <li class="mdl-menu__item" onclick="cogwheel.save()" disabled><i class="material-icons">save</i>Save</li>
+                            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="cogwheel.saveAs()"><i class="material-icons">save_alt</i>Save As...</li>
+                            <li class="mdl-menu__item" onclick="cogwheel.showInfo()">Info</li>
                         </ul>
                     </nav>
                 </div>

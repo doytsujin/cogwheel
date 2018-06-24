@@ -43,10 +43,12 @@ document.getElementById("splash").classList.add("hidden");
 
 class LazyMan {
     constructor() {
+        /** @type {any} */
+        this._loading = {};
         /** @type {Set<string>} */
         this._loaded = new Set();
         /** @type {any} */
-        this._loading = {};
+        this._cache = {};
 
         /**
          * The default prefixes for the resource types.
@@ -92,6 +94,21 @@ class LazyMan {
                 script.addEventListener("error", () => this.reject(id), false);
                 document.head.appendChild(script);
             },
+
+            "txt": (id, url) => {
+                fetch(url).then(response => response.text()).then(text => {
+                    this.resolve(id, text);
+                }).catch(reason => this.reject(id, reason));
+            },
+
+            "yaml": (id, url) => {
+                fetch(url).then(response => response.text()).then(text => {
+                    if (window["jsyaml"])
+                        this.resolve(id, window["jsyaml"].load(text));
+                    else
+                        this.resolve(id, text);
+                }).catch(reason => this.reject(id, reason));
+            },
         };
     }
 
@@ -113,12 +130,15 @@ class LazyMan {
         }
 
         let indexOfProtocol = url.indexOf("://");
-        if ((indexOfProtocol === -1 || indexOfProtocol >= 8) &&
-            this.prefixes[type])
-            url = this.prefixes[type] + url;
+        if (indexOfProtocol === -1 || indexOfProtocol >= 8) {
+            if (this.prefixes[type])
+                url = this.prefixes[type] + url;
+            else if (this.prefixes[""])
+                url = this.prefixes[""] + url;
+        }
 
         if (this._loaded.has(id))
-            return Promise.resolve();
+            return Promise.resolve(this._cache[id]);
 
         if (this._loading[id])
             return this._loading[id].promise;
@@ -189,6 +209,7 @@ class LazyMan {
 
         this._loaded.add(id);
         this._loading[id] = undefined;
+        this._cache[id] = data;
 
         if (loading)
             loading.resolve(data);
