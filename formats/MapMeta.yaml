@@ -1,0 +1,36 @@
+_: |
+  Welcome to Everest.Cogwheel!
+  This tool is still very early in development.
+
+_Icon: "Graphics/Atlases/Gui/{...}.png"
+Icon: "areas/city"
+
+_Interlude: "Is this a prologue / epilogue map?"
+Interlude: false
+
+IntroType:
+  - Respawn
+  - WalkInRight
+  - WalkInLeft
+  - Jump
+  - WakeUp*
+
+_Dreaming: "Does this map start out dreamy like Old Site?"
+Dreaming: false
+
+_CoreMode: "Is this a core-themed map? If so, in what mode does it start?"
+CoreMode:
+  - None*
+  - Hot
+  - Cold
+
+_CassetteSong: "What song is going to play in the cassette room?"
+CassetteSong:
+  - "event:/music/cassette/01_forsaken_city*"
+  - "event:/music/cassette/02_old_site"
+  - "event:/music/cassette/03_resort"
+  - "event:/music/cassette/04_cliffside"
+  - "event:/music/cassette/05_mirror_temple"
+  - "event:/music/cassette/06_reflection"
+  - "event:/music/cassette/07_summit"
+  - "event:/music/cassette/09_core"

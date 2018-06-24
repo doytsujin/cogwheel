@@ -53,12 +53,6 @@ function genCall() {
     args.splice(0, 1);
     return () => f.apply(this, args);
 };
-function genPromise() {
-    var call = Stacks.genCall.apply(this, arguments);
-    return new Promise(function(resolve, reject) {
-        resolve({ genPromise: "true", r: call() });
-    });
-};
 
 /**
  * @param {HTMLElement} main

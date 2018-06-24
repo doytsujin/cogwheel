@@ -9,26 +9,18 @@ lazyman.prefixes["js"] = "./js/";
 
 // Core (critical) dependencies.
 await lazyman.all([
-    "rdom.js", // Located inside ./js/
-
     // Located inside ./js/
+    "rdom.js",
     "js-yaml.min.js",
 
-    // Located outside of ./css/
+    // Located outside of ./css/ and ./js/
     "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css",
-    // Located outside of ./js/
     "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js",
 
-    // Located inside of ./css/, but the dependency ID would default to "default.css"
-    // Set ID to "highlight-style/default.css", using custom lazyman.load(...) params.
-    [ "highlight-style/default.css", "highlight/default.css"],
-    // Located inside of ./js/
-    "highlight.pack.js",
-
     // Located inside ./css/
-    "cogwheel.css",
+    "main.css",
     // Located inside ./js/
-    "cogwheel.utils.js",
+    "utils.js",
 ]);
 
 // main.js and other "weak" dependencies.
@@ -55,11 +47,13 @@ class LazyMan {
          * @type {any}
          */
         this.prefixes = {
+            "": "./",
             "css": "/css/",
             "js": "/js/",
         };
 
-        this.verbose = false;
+        this.logResolve = false;
+        this.logReject = true;
 
         /**
          * The default loaders for the resource types.
@@ -96,13 +90,23 @@ class LazyMan {
             },
 
             "txt": (id, url) => {
-                fetch(url).then(response => response.text()).then(text => {
+                let eFix = new Error();
+                fetch(url).then(response => {
+                    if (!response.ok && !response.redirected)
+                        throw (eFix.message = response.statusText, eFix);
+                    return response;
+                }).then(response => response.text()).then(text => {
                     this.resolve(id, text);
                 }).catch(reason => this.reject(id, reason));
             },
 
             "yaml": (id, url) => {
-                fetch(url).then(response => response.text()).then(text => {
+                let eFix = new Error();
+                fetch(url).then(response => {
+                    if (!response.ok && !response.redirected)
+                        throw (eFix.message = response.statusText, eFix);
+                    return response;
+                }).then(response => response.text()).then(text => {
                     if (window["jsyaml"])
                         this.resolve(id, window["jsyaml"].load(text));
                     else
@@ -163,7 +167,7 @@ class LazyMan {
 
     /**
      * Lazy-load all resources (dependencies).
-     * @param {any[]} deps The dependency list, accepting either the URLs (IDs will be the file name) or the parameters when calling load.
+     * @param {any[]} deps The dependency list, accepting either the IDs / URLs or the parameters when calling load.
      * @param {function(string)} [onfulfilled] The optional per-dependency resolve callback.
      * @param {function(string)} [onrejected] The optional per-dependency reject callback.
      * @returns {Promise<any[]>} A promise.
@@ -173,16 +177,8 @@ class LazyMan {
         for (let dep of deps) {
             let p;
             if (typeof(dep) === "string") {
-                // id / url
-                let url = dep;
-                let indexOfID = dep.lastIndexOf("/");
-                let id = url.slice(indexOfID + 1);
-                if (url[0] === "*") {
-                    url = url.slice(1);
-                    id = "*" + id;
-                }
-                p = this.load(id, url);
-                p.then(() => onfulfilled(id), () => onrejected(id));
+                p = this.load(dep);
+                p.then(() => onfulfilled(dep), () => onrejected(dep));
 
             } else {
                 // Arguments for load.
@@ -204,7 +200,7 @@ class LazyMan {
             return;
         let loading = this._loading[id];
 
-        if (this.verbose)
+        if (this.logResolve)
             console.log("[lazyman]", "Resolved:", id);
 
         this._loaded.add(id);
@@ -225,8 +221,8 @@ class LazyMan {
         if (!loading)
             return;
 
-        if (this.verbose)
-            console.log("[lazyman]", "Rejected:", id, reason);
+        if (this.logReject)
+            console.error("[lazyman]", "Rejected:", id, reason);
 
         this._loading[id] = undefined;
 
