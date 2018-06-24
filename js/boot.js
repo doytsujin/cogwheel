@@ -11,10 +11,10 @@
         // https://github.com/nodeca/js-yaml
         "ext/js-yaml.min.js",
 
-        // https://materializecss.com/
+        // https://getmdl.io/
         ["materialicons", "https://fonts.googleapis.com/icon?family=Material+Icons", "css"],
-        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js",
+        "https://code.getmdl.io/1.3.0/material.indigo-pink.min.css",
+        "https://code.getmdl.io/1.3.0/material.min.js",
 
         // https://github.com/Microsoft/monaco-editor/blob/master/docs/integrate-amd-cross.md
         // https://cdnjs.com/libraries/monaco-editor
@@ -101,7 +101,7 @@
             splash.classList.add("hidden");
         }, 200);
         setTimeout(() => {
-            splash.remove();
+            // splash.remove();
         }, 1000);
     });
 })();

@@ -1,4 +1,4 @@
-* {
+*, ::before, ::after {
     box-sizing: border-box;
 }
 
@@ -8,10 +8,16 @@ a {
 
 /* #splash inlined */
 #splash.hidden {
+    display: block !important;
     transition: opacity 0.2s, background-color 0.2s, transform 0.2s;
     opacity: 0;
     pointer-events: none;
     transform: scale(1.1);
+}
+
+#logo {
+    height: 48px;
+    margin-right: 16px;
 }
 
 .dropdown-content {
@@ -21,6 +27,14 @@ a {
 }
 nav .dropdown-content {
     top: 64px !important;
+}
+nav button.mdl-button {
+    color: white;
+}
+
+.mdl-menu__item .material-icons {
+    margin-right: 0.5em;
+    transform: translateY(7px);
 }
 
 body {
@@ -35,15 +49,19 @@ body {
     flex-direction: column;
 }
 
-body > nav {
-    padding: 0 32px;
-    background: #3b2d4a;
+header.mdl-layout__header {
+    background-color: #3b2d4a;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-#main {
+main.mdl-layout__content {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
+    overflow: hidden;
 }
 .section {
     flex: 1 0 auto;
@@ -99,4 +117,13 @@ body > nav {
 }
 .monaco-aria-container {
     top: 0;
+}
+
+#editor .collapsible {
+    box-shadow: none;
+    border: none;
+}
+#editor .collapsible-body {
+    padding: 16px;
+    border: 0;
 }

@@ -5,7 +5,6 @@ var M = M;
 
 class Cogwheel {
     constructor() {
-        this.elMain = document.getElementById("main");
         this.elEditor = document.getElementById("editor");
         this.elExtra = document.getElementById("extra");
         this.elExtraDivider = document.getElementById("extra-divider");
@@ -13,9 +12,6 @@ class Cogwheel {
 
         // Initialize the divider before anything else to prevent the layout from changing.
         this.registerDividerH(this.elExtra, this.elExtraDivider, true);
-
-        // Initialize Materialize.
-        M.AutoInit();
 
         // Initialize Monaco editor.
         this.monacoModel = monaco.editor.createModel("", "yaml");
@@ -25,8 +21,6 @@ class Cogwheel {
 
         // Initialize our own custom elements.
         // ...
-
-        M.toast({html: `<i class="material-icons">warning</i>&nbsp;&nbsp;This tool is still in development!`});
     }
 
     /**

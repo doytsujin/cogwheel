@@ -9,6 +9,7 @@
         <!-- Inlined splash styling -->
         <style>
             #splash {
+                display: block !important;
                 position: fixed;
                 left: 0;
                 top: 0;
@@ -88,32 +89,35 @@
             </div>
         </div>
 
-        <nav>
-            <ul>
-                <li>
-                    <a class="dropdown-trigger" data-target="dropdown-file">FILE</a>
-                    <ul id="dropdown-file" class="dropdown-content">
-                        <li><a><i class="material-icons">create</i>New</a></li>
-                        <li><a><i class="material-icons">folder_open</i>Open</a></li>
-                        <li><a><i class="material-icons">save</i>Download</a></li>
-                        <li class="divider" tabindex="-1"></li>
-                        <li><a>What even</a></li>
-                    </ul>
-                </li>
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+            <header class="mdl-layout__header">
+                <div class="mdl-layout__header-row">
+                    <nav class="mdl-navigation">
+                        <span class="mdl-layout-title"><img id="logo" alt="logo" src="./logo-small.png"></span>
 
-            </ul>
-        </nav>
+                        <button id="menu-file-btn" class="mdl-button mdl-js-button">File</button>
+                        <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
+                            for="menu-file-btn">
+                            <li class="mdl-menu__item"><i class="material-icons">create</i>New</li>
+                            <li class="mdl-menu__item"><i class="material-icons">folder_open</i>Open</li>
+                            <li class="mdl-menu__item" disabled><i class="material-icons">save</i>Save</li>
+                            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider"><i class="material-icons">save_alt</i>Save As...</li>
+                            <li class="mdl-menu__item">What Even</li>
+                        </ul>
+                    </nav>
+                </div>
+            </header>
+            <main class="mdl-layout__content">
 
-        <div id="main">
+                <div class="section" id="editor">
+                </div>
+    
+                <div class="section" id="extra">
+                    <div class="resize-divider" id="extra-divider"></div>
+                    <div id="code"></div>
+                </div>
 
-            <div class="section" id="editor">
-
-            </div>
-
-            <div class="section" id="extra">
-                <div class="resize-divider" id="extra-divider"></div>
-                <div id="code"></div>
-            </form>
+            </main>
         </div>
     </body>
 </html>
