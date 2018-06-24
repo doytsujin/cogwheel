@@ -2,6 +2,8 @@
 (() => {
     console.log("[cogwheel.boot]", "Loading Cogwheel and all dependencies.");
 
+    let monacoVS = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.13.1/min/vs";
+
     /** @type {any[]} */
     let deps = [
         "rdom.js",
@@ -9,9 +11,14 @@
         // https://github.com/nodeca/js-yaml
         "ext/js-yaml.min.js",
 
-        // https://highlightjs.org/
-        [ "highlight/default.css", "ext/highlight/default.css"],
-        "ext/highlight.pack.js",
+        // https://materializecss.com/
+        ["materialicons", "https://fonts.googleapis.com/icon?family=Material+Icons", "css"],
+        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css",
+        "https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js",
+
+        // https://github.com/Microsoft/monaco-editor/blob/master/docs/integrate-amd-cross.md
+        // https://cdnjs.com/libraries/monaco-editor
+        [ "monaco-editor/loader", monacoVS + "/loader.js" ],
 
         "cogwheel.css",
         "cogwheel.utils.js",
@@ -59,12 +66,36 @@
         lazyman.prefixes["js"] = "./js/";
 
     }, /*async*/ () => load(deps), () => {
-        console.log("[cogwheel.boot]", "Core dependencies loaded.");
+        console.log("[cogwheel.boot]", "Base dependencies loaded.");
 
-    }, /*async*/ () => load(core), () => {
-        console.log("[cogwheel.boot]", "Cogwheel loaded.");
+        // @ts-ignore
+        require.config({ paths: { "vs": monacoVS }});
+        // https://github.com/Microsoft/monaco-editor/blob/master/docs/integrate-amd-cross.md
+        // Before loading vs/editor/editor.main, define a global MonacoEnvironment that overwrites
+        // the default worker url location (used when creating WebWorkers). The problem here is that
+        // HTML5 does not allow cross-domain web workers, so we need to proxy the instantiation of
+        // a web worker through a same-domain script
+        // @ts-ignore
+        window.MonacoEnvironment = {
+            getWorkerUrl: function(workerId, label) {
+                return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+                    self.MonacoEnvironment = {
+                    baseUrl: '${monacoVS}'
+                    };
+                    importScripts('${monacoVS}/base/worker/workerMain.js');`
+                )}`;
+            }
+        };
+        console.log("[cogwheel.boot]", "MonacoEnvironment set up.");
 
-        window["hljs"].initHighlightingOnLoad();
+    }, /*async*/ () => new Promise((resolve, reject) => {
+        // @ts-ignore
+        require(["vs/editor/editor.main"], function() {
+            console.log("[cogwheel.boot]", "Monaco loaded.");
+            resolve();
+        });
+    }), /*async*/ () => load(core), () => {
+        console.log("[cogwheel.boot]", "Cogwheel finished loading.");
 
         setTimeout(() => {
             splash.classList.add("hidden");

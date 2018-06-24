@@ -1,32 +1,44 @@
 //@ts-check
 
 // Work around @ts-check not knowing about globals.
-var hljs = hljs;
+var M = M;
 
 class Cogwheel {
     constructor() {
-        this.main = document.getElementById("main");
-        this.mainEditor = document.getElementById("main-editor");
-        this.mainDivider = document.getElementById("main-divider");
-        this.mainYaml = document.getElementById("main-yaml");
-        this.mainCodeWrap = document.getElementById("main-yaml-code-wrap");
-        this.mainYaml.addEventListener("submit", () => false, false);
+        this.elMain = document.getElementById("main");
+        this.elEditor = document.getElementById("editor");
+        this.elExtra = document.getElementById("extra");
+        this.elExtraDivider = document.getElementById("extra-divider");
+        this.elCode = document.getElementById("code");
 
-        this.registerDividerH(this.mainEditor, this.mainDivider);
-        this.registerCodeArea(this.mainCodeWrap);
+        // Initialize the divider before anything else to prevent the layout from changing.
+        this.registerDividerH(this.elExtra, this.elExtraDivider, true);
+
+        // Initialize Materialize.
+        M.AutoInit();
+
+        // Initialize Monaco editor.
+        this.monacoModel = monaco.editor.createModel("", "yaml");
+        this.monacoEditor = monaco.editor.create(this.elCode, {
+            model: this.monacoModel
+        });
+
+        // Initialize our own custom elements.
+        // ...
+
+        M.toast({html: `<i class="material-icons">warning</i>&nbsp;&nbsp;This tool is still in development!`});
     }
 
     /**
      * @param {HTMLElement} main
      * @param {HTMLElement} divider
      */
-    registerDividerH(main, divider) {
+    registerDividerH(main, divider, flip) {
         let isDraggingDivider = false;
         let dragStart;
-        let lastWidth = main.getBoundingClientRect().width;
-        let width;
+        let lastWidth;
 
-        main.style.width = `${lastWidth}px`;
+        main.style.width = `${main.getBoundingClientRect().width}px`;
         main.style.flexGrow = "0";
 
         document.addEventListener("mousedown", e => {
@@ -34,6 +46,7 @@ class Cogwheel {
                 return;
             e.preventDefault();
             
+            lastWidth = main.getBoundingClientRect().width;
             divider.classList.add("dragging");
             dragStart = e.pageX;
         });
@@ -43,9 +56,8 @@ class Cogwheel {
                 return;
             e.preventDefault();
 
-            width = lastWidth + e.pageX - dragStart;
-            
-            main.style.width = `${width}px`;
+            main.style.width = `${lastWidth + (flip ? -1 : 1) * (e.pageX - dragStart)}px`;
+            this.monacoEditor.layout();
         });
         
         document.addEventListener("mouseup", e => {
@@ -53,53 +65,6 @@ class Cogwheel {
                 e.preventDefault();
             divider.classList.remove("dragging");
             isDraggingDivider = false;
-            lastWidth = width;
-        });
-    }
-
-    /**
-     * @param {HTMLElement} codeWrap
-     */
-    registerCodeArea(codeWrap) {
-        let wasEditing = false;
-        let isEditing = false;
-
-        document.addEventListener("click", e => {
-            let target = e.target;
-            while (target && target !== codeWrap)
-                // @ts-ignore
-                target = target.parentElement;
-            wasEditing = isEditing;
-            isEditing = target === codeWrap;
-
-            if (wasEditing == isEditing)
-                return;
-
-            if (isEditing) {
-                codeWrap.classList.add("editing");
-
-                let code = codeWrap.firstElementChild;
-                let codeArea = document.createElement("textarea");
-                codeArea.id = code.id;
-                for (let i = 0; i < code.classList.length; i++)
-                    codeArea.classList.add(code.classList[i]);
-                // @ts-ignore
-                codeArea.value = code.innerText;
-                codeWrap.replaceChild(codeArea, code);
-                
-            } else {
-                codeWrap.classList.remove("editing");
-
-                let codeArea = codeWrap.firstElementChild;
-                let code = document.createElement("code");
-                code.id = codeArea.id;
-                for (let i = 0; i < codeArea.classList.length; i++)
-                    code.classList.add(codeArea.classList[i]);
-                // @ts-ignore
-                code.innerHTML = escapeHTML(codeArea.value);
-                codeWrap.replaceChild(code, codeArea);
-                hljs.highlightBlock(code);
-            }
         });
     }
 

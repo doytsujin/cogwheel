@@ -1,11 +1,3 @@
-body {
-    overflow-x: hidden;
-    margin: 0;
-    font-family: sans-serif;
-    background: #eeeeee;
-    color: rgba(0, 0, 0, 0.87);
-}
-
 * {
     box-sizing: border-box;
 }
@@ -22,18 +14,44 @@ a {
     transform: scale(1.1);
 }
 
+.dropdown-content {
+    /* Materialize screws up its own dropdown sizing. */
+    width: auto !important;
+    height: auto !important;
+}
+nav .dropdown-content {
+    top: 64px !important;
+}
+
+body {
+    overflow: hidden;
+    margin: 0;
+    font-family: sans-serif;
+    background: #eeeeee;
+    color: rgba(0, 0, 0, 0.87);
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body > nav {
+    padding: 0 32px;
+    background: #3b2d4a;
+}
+
 #main {
     display: flex;
     flex-direction: row;
-    min-height: 100vh;
+    flex-grow: 1;
 }
 .section {
     flex: 1 0 auto;
-    padding: 32px;
+    padding: 16px;
     position: relative;
 }
 
-.resizedivider {
+.resize-divider {
     cursor: ew-resize;
     user-select: none;
     flex: 0 0 auto;
@@ -43,8 +61,8 @@ a {
     bottom: 0;
     width: 8px;
 }
-.resizedivider::before,
-.resizedivider::after {
+.resize-divider::before,
+.resize-divider::after {
     content: "";
     position: absolute;
     left: 0;
@@ -52,43 +70,33 @@ a {
     right: 0;
     bottom: 0;
 }
-.resizedivider::before {
+.resize-divider::before {
     transition: background-color 0.2s, transform 0.2s;
     transform: scaleX(0);
     background: transparent;
 }
-.resizedivider:hover::before {
+.resize-divider:hover::before {
     transform: scaleX(0.5);
     background: #888888;
 }
-.resizedivider.dragging::before {
+.resize-divider.dragging::before {
     transform: scaleX(1);
     background: #222222;
 }
 
-#main-yaml {
+#extra {
     display: flex;
     flex-direction: column;
-    background: #f8f8f8;
+    background: #ffffff;
     box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
     border-left: 1px #cccccc dashed;
 }
-#main-yaml-code-wrap {
-    flex: 1 0 fill;
+#code {
     width: 100%;
     height: 100%;
-    margin-top: 32px;
-    transition: border-left-color 0.2s;
-    border-left: #cccccc 1px solid;
+    margin: 0;
+    transition: border-left-color 0.4s;
 }
-#main-yaml-code-wrap.editing {
-    border-left-color: black;
-}
-#main-yaml-code {
-    width: 100%;
-    height: 100%;
-    display: block;
-    padding: 16px;
-    border: none;
-    resize: none;
+.monaco-aria-container {
+    top: 0;
 }

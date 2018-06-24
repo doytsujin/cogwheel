@@ -71,7 +71,7 @@
             }
         </style>
 
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
         
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="theme-color" content="#3b2d4a">
@@ -88,41 +88,31 @@
             </div>
         </div>
 
+        <nav>
+            <ul>
+                <li>
+                    <a class="dropdown-trigger" data-target="dropdown-file">FILE</a>
+                    <ul id="dropdown-file" class="dropdown-content">
+                        <li><a><i class="material-icons">create</i>New</a></li>
+                        <li><a><i class="material-icons">folder_open</i>Open</a></li>
+                        <li><a><i class="material-icons">save</i>Download</a></li>
+                        <li class="divider" tabindex="-1"></li>
+                        <li><a>What even</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+        </nav>
+
         <div id="main">
-            <div class="section" id="main-editor">
-                
+
+            <div class="section" id="editor">
+
             </div>
 
-
-            <div class="section" id="main-yaml">
-                <div class="resizedivider" id="main-divider"></div>
-                <div id="toolbar">
-                    <button>Load</button>
-                    <button>?</button>
-                </div>
-<pre id="main-yaml-code-wrap"><code class="yaml" id="main-yaml-code"># This is just an example.
-
-# Graphics/Atlases/Gui/{...}.png
-Icon: areas/core
-
-# Respawn, WalkInRight, WalkInLeft, Jump, WakeUp
-IntroType: WakeUp
-# None, Hot, Cold
-CoreMode: Hot
-
-Modes:
-    # Side A
-    - Path: ~
-    # Default, CH6End, Core, OldSite, Prologue, TheSummit
-    Inventory: Core
-    HeartIsEnd: true
-    
-    # Side B:
-    - Path: ~
-    
-    # Side C:
-    - Path: ~
-</code></pre>
+            <div class="section" id="extra">
+                <div class="resize-divider" id="extra-divider"></div>
+                <div id="code"></div>
             </form>
         </div>
     </body>
