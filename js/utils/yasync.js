@@ -40,7 +40,7 @@ function yasync() {
                 return;
             }
     
-            if (genr.value instanceof Promise)
+            if (genr.value.then instanceof Function)
                 p = genr.value;
             p = p.then(step, reject);
         }

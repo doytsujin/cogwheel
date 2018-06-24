@@ -7,9 +7,9 @@
  */
 
 /**
- * A RDOM list context, to be used for feeds.
+ * A RDOM context.
  */
-class RDOMListCtx {
+class RDOMCtx {
 
     /**
      * @param {RDOM} rdom
@@ -88,7 +88,7 @@ class RDOMListCtx {
      * @param {any} ref The reference object belonging to the element.
      * @param {number} index The index at which the element will be added.
      * @param {function | string} html The element itself in its string form, or its generator.
-     * @returns The created / updated wrapper element.
+     * @returns {HTMLElement} The created / updated wrapper element.
      */
     add(ref, index, html) {
         // Let's hope that making this method async doesn't break culling.
@@ -149,6 +149,7 @@ class RDOMListCtx {
         // @ts-ignore html is guaranteed to be a string.
         this.htmls.set(ref, html);
 
+        // @ts-ignore el is guaranteed to be a HTMLElement.
         return el;
     }
 
@@ -207,28 +208,28 @@ class RDOMListCtx {
 class RDOM {
 
     constructor() {
-        /** @type {Map<HTMLElement, RDOMListCtx>} */
+        /** @type {Map<HTMLElement, RDOMCtx>} */
         this.contexts = new Map();
 
         /** @type {HTMLElement} */
         this._contextLastContainer = null;
-        /** @type {RDOMListCtx} */
+        /** @type {RDOMCtx} */
         this._contextLast = null;
     }
 
     /**
      * Gets or creates a [RDOMListCtx] for the given container element.
      * @param {HTMLElement} container The container element to which elements will be added to.
-     * @returns {RDOMListCtx} The RDOM list context for the container element.
+     * @returns {RDOMCtx} The RDOM list context for the container element.
      */
-    list(container) {
+    ctx(container) {
         if (this._contextLastContainer === container)
             return this._contextLast;
 
         this._contextLastContainer = container;
         var ctx = this.contexts.get(container);
         if (!ctx)
-            this.contexts.set(container, ctx = new RDOMListCtx(this, container));
+            this.contexts.set(container, ctx = new RDOMCtx(this, container));
         return this._contextLast = ctx;
     }
 

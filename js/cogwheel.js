@@ -1,12 +1,14 @@
 //@ts-check
 
 // Work around @ts-check not knowing about globals.
-var jsyaml = jsyaml;
+var jsyaml = jsyaml; // js-yaml
+var componentHandler = componentHandler; // mdl
 
 class CogwheelFormat {
-    constructor(yaml) {
-        this.yaml = yaml;
-        this.comments = {}
+    constructor(id, yaml) {
+        this.id = id;
+        this.defs = yaml;
+        this.defaults = {};
 
         this.example = "";
 
@@ -19,47 +21,57 @@ class CogwheelFormat {
             this.example += "\n";
         }
 
-        let crawl = (yaml, comments) => {
-            for (let key in yaml) {
+        let crawl = (defs, defaults) => {
+            for (let key in defs) {
                 if (key[0] === "_")
                     continue;
                 
-                if (yaml[`_${key}`])
-                    this.example += toComment(yaml[`_${key}`]);
+                if (defs[`_${key}`])
+                    this.example += toComment(defs[`_${key}`]);
                 
-                let def = yaml[key];
+                let def = defs[key];
+                let defValue = def;
                 if (def instanceof Array) {
-                    for (let v of def) {
+                    for (let i in def) {
+                        let v = def[i];
                         if (typeof(v) === "string" &&
                             v[v.length - 1] === "*") {
-                            def = v.slice(0, -1);
+                            v = v.slice(0, -1);
+                            def[i] = v;
+                            defValue = v;
                             break;
                         }
                     }
                 }
 
                 let dump = {};
-                dump[key] = def;
+                dump[key] = defaults[key] = defValue;
                 this.example += jsyaml.safeDump(dump);
                 this.example += "\n";
             }
         }
 
-        crawl(this.yaml, this.comments);
+        crawl(this.defs, this.defaults);
     }
 }
 
 class CogwheelSession {
-    constructor(yamlText) {
+    /**
+     * @param {CogwheelFormat} format
+     * @param {string} [yamlText]
+     */
+    constructor(format, yamlText) {
+        this.format = format;
+
         this.yamlText = yamlText || "";
-        this._yamlTextLast = null;
-        this._yamlObjLast = {};
+        if (!this.yamlText && format)
+            this.yamlText = format.example;        
     }
 
     get yamlObj() {
         if (this._yamlTextLast === this.yamlText)
             return this._yamlObjLast;
-        this._yamlObjLast = jsyaml.safeLoad(this._yamlTextLast = this.yamlText);
+        return this._yamlObjLast = jsyaml.safeLoad(this._yamlTextLast = this.yamlText);
     }
 }
 
@@ -67,24 +79,19 @@ class Cogwheel {
     constructor() {
         this.formats = {};
 
-        this.elEditor = document.getElementById("editor");
-        this.elExtra = document.getElementById("extra");
-        this.elExtraDivider = document.getElementById("extra-divider");
-        this.elCode = document.getElementById("code");
-
         // Initialize the divider before anything else to prevent the layout from changing.
-        registerDividerH(this.elExtra, this.elExtraDivider, true, () => {
+        registerDividerH(document.getElementById("extra"), document.getElementById("extra-divider"), true, () => {
             this.monacoEditor.layout();
         });
 
         // Initialize Monaco editor.
         this.monacoModel = monaco.editor.createModel(``, "yaml");
-        this.monacoEditor = monaco.editor.create(this.elCode, {
+        this.monacoEditor = monaco.editor.create(document.getElementById("code"), {
             model: this.monacoModel
         });
 
         // Initialize our own custom elements.
-        // ...
+        this.editorCtx = rdom.ctx(document.getElementById("editor"));
     }
 
     load() {
@@ -124,12 +131,12 @@ class Cogwheel {
                 let id = formatDeps[i];
                 id = id.slice(id.lastIndexOf("/") + 1);
                 id = id.slice(0, id.length - 5);
-                this.formats[id] = new CogwheelFormat(formats[i]);
+                this.formats[id] = new CogwheelFormat(id, formats[i]);
             }
 
             // Load example.
             // TODO: Resume last session instead.
-            this.session = new CogwheelSession(this.formats["MapMeta"].example);
+            this.session = new CogwheelSession(this.formats["MapMeta"]);
         }, this);
     }
 
@@ -139,23 +146,79 @@ class Cogwheel {
     set session(value) {
         this._session = value;
         this.monacoModel = monaco.editor.createModel(this._session.yamlText, "yaml");
+        this.monacoModel.onDidChangeContent(event => {
+            this.session.yamlText = this.monacoModel.getValue();
+            this.render();
+        });
         this.monacoEditor.setModel(this.monacoModel);
+        this.render();
     }
 
-    loadSessionRemote(url) {
-        this.session = new CogwheelSession(`Loading: "${url}"`);
+    initSessionFromRemoteDoc(format, url) {
+        this.session = new CogwheelSession(null, `Loading: "${url}"`);
         return yasync(function*() {
             let text = yield lazyman.load(url, "", "txt");
-            return this.session = new CogwheelSession(text);
+            return this.session = new CogwheelSession(format, text);
         });
     }
 
-    /**
-     * 
-     * @param {string} text The .meta.yaml in text format.
-     */
-    loadMeta(text) {
-        
+    render() {
+        /**
+         * @param {RDOMCtx} ctx
+         * @param {any} values
+         * @param {any} defs
+         * @param {any} defaults
+         */
+        let crawl = (ctx, values, defs, defaults) => {
+            for (let key in defs) {
+                if (key[0] === "_")
+                    continue;
+
+                let handler = ""; // TODO
+                
+                let input;
+
+                if (defs[key] instanceof Array) {
+                    input = "[TODO: dropdowns]"
+
+                } else if (typeof(defs[key]) === "boolean") {
+                    // Toggle.
+                    input =
+`<label class="input mdl-switch mdl-js-switch mdl-js-ripple-effect">
+    <input type="checkbox" class="mdl-switch__input" ${values[key] === true ? "checked" : ""} oninput="${handler}">
+    <span class="mdl-switch__label">[TODO: move input on same line as title]</span>
+</div>`;
+
+                } else {
+                    // Text (fallback).
+                    input =
+`<div class="input mdl-textfield mdl-js-textfield">
+    <input type="text" class="mdl-textfield__input" value="${escapeAttr(values[key])}" placeholder="${escapeAttr(defaults[key])}" oninput="${handler}">
+</div>`;
+                }
+
+                let html =
+`<div class="property">
+    <h6 class="key mdl-typography--title">${escapeHTML(key)}</h6>
+    ${defs[`_${key}`] ? `<p class="description">${escapeHTML(defs[`_${key}`])}</p>` : ``}
+    ${input}
+</div>`;
+
+                let el = ctx.add(key, -1, html);
+                try {
+                    for (let inputEl of el.getElementsByClassName("input"))
+                        componentHandler.upgradeElement(inputEl);
+                } catch (e) {
+                    // Probably already upgraded.
+                }
+            }
+        }
+
+        crawl(
+            this.editorCtx, this.session.yamlObj,
+            this.session.format.defs, this.session.format.defaults
+        );
+        this.editorCtx.cleanup();
     }
 
 }

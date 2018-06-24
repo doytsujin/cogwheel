@@ -5,9 +5,10 @@ _: |
 _Icon: "Graphics/Atlases/Gui/{...}.png"
 Icon: "areas/city"
 
-_Interlude: "Is this a prologue / epilogue map?"
+_Interlude: "Whether this is a prologue / epilogue map or not."
 Interlude: false
 
+_IntroType: "Define how Maddy enters the level."
 IntroType:
   - Respawn
   - WalkInRight
@@ -15,16 +16,16 @@ IntroType:
   - Jump
   - WakeUp*
 
-_Dreaming: "Does this map start out dreamy like Old Site?"
+_Dreaming: "Whether this map starts out dreamy like Old Site or not."
 Dreaming: false
 
-_CoreMode: "Is this a core-themed map? If so, in what mode does it start?"
+_CoreMode: "The \"core mode\" (temperature) in which the map starts out."
 CoreMode:
   - None*
   - Hot
   - Cold
 
-_CassetteSong: "What song is going to play in the cassette room?"
+_CassetteSong: "The song playing in the cassette room."
 CassetteSong:
   - "event:/music/cassette/01_forsaken_city*"
   - "event:/music/cassette/02_old_site"
