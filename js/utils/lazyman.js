@@ -82,8 +82,6 @@ class LazyMan {
                 let script = document.createElement("script");
                 script.type = "text/javascript";
                 script.src = url;
-                script.async = true;
-                script.defer = true;
                 script.addEventListener("load", () => this.resolve(id, script), false);
                 script.addEventListener("error", () => this.reject(id), false);
                 document.head.appendChild(script);
