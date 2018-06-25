@@ -176,18 +176,22 @@ class Cogwheel {
 
                 let handler = ""; // TODO
                 
-                let input;
+                let input = "";
 
                 if (defs[key] instanceof Array) {
-                    input = "[TODO: dropdowns]"
+                    if (defs[key].length === 0) {
+                        input = `<span class="input">[TODO: custom list]</span>`
+
+                    } else {
+                        input = `<span class="input">[TODO: dropdowns]</span>`
+                    }
 
                 } else if (typeof(defs[key]) === "boolean") {
                     // Toggle.
                     input =
-`<label class="input mdl-switch mdl-js-switch mdl-js-ripple-effect">
-    <input type="checkbox" class="mdl-switch__input" ${values[key] === true ? "checked" : ""} oninput="${handler}">
-    <span class="mdl-switch__label">[TODO: move input on same line as title]</span>
-</div>`;
+`<label class="input mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">
+    <input type="checkbox" class="mdl-checkbox__input" ${values[key] === true ? "checked" : ""} oninput="${handler}">
+</label>`;
 
                 } else {
                     // Text (fallback).
@@ -199,9 +203,10 @@ class Cogwheel {
 
                 let html =
 `<div class="property">
-    <h6 class="key mdl-typography--title">${escapeHTML(key)}</h6>
+    <div class="head">
+        <h6 class="key mdl-typography--title">${escapeHTML(key)}:</h6>${input}
+    </div>
     ${defs[`_${key}`] ? `<p class="description">${escapeHTML(defs[`_${key}`])}</p>` : ``}
-    ${input}
 </div>`;
 
                 let el = ctx.add(key, -1, html);

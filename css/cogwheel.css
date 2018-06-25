@@ -1,7 +1,3 @@
-*, ::before, ::after {
-    box-sizing: border-box;
-}
-
 a {
     cursor: pointer;
 }
@@ -70,6 +66,7 @@ main.mdl-layout__content {
     position: relative;
     overflow-x: hidden;
     overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .resize-divider {
@@ -124,19 +121,27 @@ main.mdl-layout__content {
     top: 0;
 }
 
-#editor > * {
+#editor > .rdom-wrapper > .property {
     display: block;
-}
-#editor > *:last-child {
-    margin-bottom: 128px;
-}
-
-#editor .property {
     width: 100%;
+    margin-bottom: 16px;
 }
-#editor .property .input {
-    width: 100%;
+#editor .property > .head {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    height: calc(20px + 24px + 16px);
+    box-sizing: border-box;
 }
-#editor .property .input.mdl-textfield {
+#editor .property > .head > .key {
+    flex: 0 0 auto;
+}
+#editor .property > .head > .input {
+    flex: 1 1 auto;
+    margin-left: 16px;
+    margin-top: 24px;
+}
+#editor .property .input.mdl-textfield,
+#editor .property .input.mdl-textfield > input {
     padding: 0;
 }
