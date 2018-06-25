@@ -2,7 +2,7 @@
 
 // Work around @ts-check not knowing about globals.
 var jsyaml = jsyaml; // js-yaml
-var componentHandler = componentHandler; // mdl
+var mdc = mdc; // mdc
 
 class CogwheelSession {
     /**
@@ -36,22 +36,18 @@ class CogwheelSession {
                 /** @type {CogwheelMetaDef} */
                 let def = defs[key];
 
-                let el = ctx.add(def.path, (ctx, propEl) => {
+                let el = ctx.add(def.path, -1, (ctx, propEl) => {
                     propEl = propEl ||
-                    rd`<div class="property">
-                        <div class="head">
-                            <h6 class="key mdl-typography--title">${key}:</h6> ?${"input"}
-                        </div>
-                        ${def.comment ? rd`<p class="description">${def.comment}</p>` : ``}
-                    </div>`;
+                    rd$`<div class="property">
+                            <h3 class="key mdc-typography--subtitle1">${key}:</h3>
+                            ${def.comment ? rd$`<p class="description mdc-typography--body2">${def.comment}</p>` : ``}
+                            ?${"input"}
+                        </div>`;
                     
                     let input = this.cogwheel.render(
                         def, ctx, propEl.rdomGet("input"),
                         values[key], /* TODO: Handler */ null
                     );
-                    if (input) {
-                        input.classList.add("input");
-                    }
                     propEl.rdomSet({
                         "input": input
                     });
@@ -60,8 +56,8 @@ class CogwheelSession {
                 });
 
                 try {
-                    for (let inputEl of el.getElementsByClassName("input"))
-                        componentHandler.upgradeElement(inputEl);
+                    // for (let inputEl of el.getElementsByClassName("input"))
+                        // componentHandler.upgradeElement(inputEl);
                 } catch (e) {
                     // Probably already upgraded.
                 }
@@ -90,7 +86,7 @@ class Cogwheel {
         });
 
         // Initialize our own custom elements.
-        this.editorCtx = rdom.ctx(document.getElementById("editor"));
+        this.editorCtx = new RDOMContainer(document.getElementById("editor")).rdomCtx;
     }
 
     load() {
@@ -138,6 +134,8 @@ class Cogwheel {
 
             yield load(deps);
 
+            mdc.autoInit();
+
             // Load example.
             // TODO: Resume last session instead.
             this.session = new CogwheelSession(this, this.formats["MapMeta"]);
@@ -178,10 +176,10 @@ class Cogwheel {
             return null;
         let render = this.renderers[ref.constructor.name];
         if (!render)
-            return rd`<span>[Missing: ${ref.constructor.name}]</span>`;
+            return rd$`<span>[Missing: ${ref.constructor.name}]</span>`;
         return render(ctx, el, ref, ...args);
     }
 
 }
 
-var cogwheel = window["cogwheel"] = new Cogwheel();
+const cogwheel = window["cogwheel"] = new Cogwheel();

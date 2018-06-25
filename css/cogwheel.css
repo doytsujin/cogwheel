@@ -1,3 +1,7 @@
+:root {
+    --mdc-theme-primary: #000000;
+}
+
 a {
     cursor: pointer;
 }
@@ -24,13 +28,12 @@ a {
 nav .dropdown-content {
     top: 64px !important;
 }
-nav button.mdl-button {
+nav button.mdc-button {
     color: white;
 }
 
-.mdl-menu__item .material-icons {
+.mdc-menu .mdc-list-item .material-icons {
     margin-right: 0.5em;
-    transform: translateY(7px);
 }
 
 body {
@@ -46,15 +49,19 @@ body {
     font-size: 16px;
 }
 
-header.mdl-layout__header {
+header.mdc-top-app-bar {
     background-color: #3b2d4a;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    position: relative;
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
+    --mdc-theme-primary: #ffffff;
 }
 
-main.mdl-layout__content {
+main {
+    height: 100%;
     display: flex;
     flex-direction: row;
     flex-grow: 1;
@@ -127,23 +134,5 @@ main.mdl-layout__content {
     width: 100%;
     margin-bottom: 16px;
 }
-#editor .property > .head {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    height: calc(20px + 24px + 16px);
-    box-sizing: border-box;
-}
-#editor .property > .head .key {
-    flex: 0 0 auto;
-}
-#editor .property > .head .input {
-    display: block;
-    flex: 1 1 auto;
-    margin-left: 16px;
-    margin-top: 24px;
-}
-#editor .property .input.mdl-textfield,
-#editor .property .input.mdl-textfield > input {
-    padding: 0;
+#editor .property .input {
 }

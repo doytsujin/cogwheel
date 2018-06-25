@@ -18,14 +18,15 @@ yasync(this, function*() {
 
     let depsBase = [
         "utils/rdom.js",
+        "utils/mdch.js",
 
         // https://github.com/nodeca/js-yaml
         "ext/js-yaml.min.js",
 
-        // https://getmdl.io/
+        // https://material.io/develop/web/docs/getting-started/
         [ "materialicons.css", "https://fonts.googleapis.com/icon?family=Material+Icons", "css" ],
-        "https://code.getmdl.io/1.3.0/material.indigo-pink.min.css",
-        "https://code.getmdl.io/1.3.0/material.min.js",
+        "https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css",
+        "https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js",
 
         "cogwheel.css",
         "cogwheel.utils.js",

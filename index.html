@@ -103,36 +103,40 @@
             </div>
         </div>
 
-        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-            <header class="mdl-layout__header">
-                <div class="mdl-layout__header-row">
-                    <nav class="mdl-navigation">
-                        <span class="mdl-layout-title"><img id="logo" alt="logo" src="./logo-small.png"></span>
-
-                        <button id="menu-file-btn" class="mdl-button mdl-js-button">File</button>
-                        <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
-                            for="menu-file-btn">
-                            <li class="mdl-menu__item" onclick="cogwheel.new()"><i class="material-icons">create</i>New</li>
-                            <li class="mdl-menu__item" onclick="cogwheel.open()"><i class="material-icons">folder_open</i>Open</li>
-                            <li class="mdl-menu__item" onclick="cogwheel.save()" disabled><i class="material-icons">save</i>Save</li>
-                            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="cogwheel.saveAs()"><i class="material-icons">save_alt</i>Save As...</li>
-                            <li class="mdl-menu__item" onclick="cogwheel.showInfo()">Info</li>
-                        </ul>
-                    </nav>
-                </div>
-            </header>
-            <main class="mdl-layout__content">
-
-                <div class="section" id="editor">
+        <header class="mdc-top-app-bar">
+            <div class="mdc-top-app-bar__row">
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                    <span class="mdc-top-app-bar__title"><img id="logo" alt="logo" src="./logo-small.png"></span>
                     
-                </div>
-    
-                <div class="section" id="extra">
-                    <div class="resize-divider" id="extra-divider"></div>
-                    <div id="code"></div>
-                </div>
+                    <div id="menu-file" class="mdc-menu-anchor">
+                        <button id="menu-file-btn" class="mdc-button mdc-menu-btn" data-mdc-auto-init="MDCRipple" onclick="mdch.openMenu(this)">File</button>
+                        <div class="mdc-menu" tabindex="-1" data-mdc-auto-init="MDCMenu">
+                            <ul class="mdc-menu__items mdc-list" role="menu">
+                                <li class="mdc-list-item" role="menuitem" data-mdc-auto-init="MDCRipple" tabindex="0" onclick="cogwheel.new()"><i class="material-icons">create</i>New</li>
+                                <li class="mdc-list-item" role="menuitem" data-mdc-auto-init="MDCRipple" tabindex="0" onclick="cogwheel.open()"><i class="material-icons">folder_open</i>Open</li>
+                                <li class="mdc-list-item" role="menuitem" data-mdc-auto-init="MDCRipple" tabindex="0" onclick="cogwheel.save()" tabindex="-1"><i class="material-icons">save</i>Save</li>
+                                <li class="mdc-list-item" role="menuitem" data-mdc-auto-init="MDCRipple" tabindex="-1" aria-disabled="true" onclick="cogwheel.saveAs()"><i class="material-icons">save_alt</i>Save As...</li>
+                                <li class="mdc-list-divider" role="separator"></li>
+                                <li class="mdc-list-item" role="menuitem" data-mdc-auto-init="MDCRipple" tabindex="0" onclick="cogwheel.showInfo()"><i class="material-icons">info</i>Info</li>
+                            </ul>
+                        </div>
+                    </div>
 
-            </main>
-        </div>
+                </section>
+            </div>
+        </header>
+
+        <main>
+
+            <div class="section" id="editor">
+                
+            </div>
+
+            <div class="section" id="extra">
+                <div class="resize-divider" id="extra-divider"></div>
+                <div id="code"></div>
+            </div>
+
+        </main>
     </body>
 </html>

@@ -232,7 +232,7 @@ class LazyMan {
 
 }
 
-var lazyman = window["lazyman"] = new LazyMan();
+const lazyman = window["lazyman"] = new LazyMan();
 lazyman.resolve("lazyman.js");
 // @ts-ignore
 if (typeof(document) != "undefined") {

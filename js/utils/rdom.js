@@ -7,7 +7,7 @@
  */
 
  /**
-  * Bind RDOM helpers to any given HTML element.
+  * RDOM helper for rd$-generated elements.
   */
  class RDOMElement extends HTMLElement {
      /**
@@ -32,6 +32,9 @@
         // Return the modified HTMLElement.
         // @ts-ignore
         return el;
+
+        // Fields.
+        this.isRDOM = true;
     }
 
     /**
@@ -57,7 +60,7 @@
             let field = this.querySelector(`rdom-field[rdom-field-key=${key}]`);
             if (!field) {
                 // Field doesn't exist, warn the user.
-                console.warn("[rdom]", "rdom-field not found:", key, "in", this);
+                console.error("[rdom]", "rdom-field not found:", key, "in", this);
                 continue;
             }
             if (!value) {
@@ -95,17 +98,47 @@
     }
  }
 
+  /**
+  * RDOM helper for RDOMCtx.
+  */
+ class RDOMContainer extends HTMLElement {
+    /**
+     * @param {HTMLElement} el
+     */
+   constructor(el) {
+       // Prevent VS Code from complaining about the lack of super()
+       if (false) super();
+
+       if (el["isRDOMCtx"])
+           // @ts-ignore
+           return el;
+       el["isRDOMCtx"] = true;
+       
+       // @ts-ignore
+       el["rdomCtx"] = new RDOMCtx(el);
+
+       // Return the modified HTMLElement.
+       // @ts-ignore
+       return el;
+
+       // Fields.
+       /** @type {RDOMCtx} */
+       this.rdomCtx = null;
+   }
+}
+
 /**
  * A RDOM context.
  */
 class RDOMCtx {
     /**
-     * @param {RDOM} rdom
-     * @param {HTMLElement} container 
+     * @param {RDOMContainer} container 
      */
-    constructor(rdom, container) {
-        this.rdom = rdom;
+    constructor(container) {
+        if (!container["isRDOMCtx"])
+            container = new RDOMContainer(container);
         this.container = container;
+        this.container.rdomCtx = this;
 
         /**
          * Culling setup.
@@ -165,11 +198,11 @@ class RDOMCtx {
      * Adds or updates an element at the given index.
      * This function needs a reference object so that it can find and update existing elements for any given object.
      * @param {any} ref The reference object belonging to the element.
+     * @param {number} index The index at which the element will be added. Set to undefined or -1 for unordered containers.
      * @param {function(RDOMCtx, RDOMElement, ...any) : RDOMElement} render The element renderer.
-     * @param {number} [index] The index at which the element will be added.
      * @returns {RDOMElement} The created / updated wrapper element.
      */
-    add(ref, render, index, ...args) {
+    add(ref, index, render, ...args) {
         if (this._cull.active && (index < this._cull.min || this._cull.max <= index)) {
             // Out of bounds - remove if existing, don't add.
             this.removeRef(ref);
@@ -182,16 +215,18 @@ class RDOMCtx {
         if (el) {
             let elOld = el;
             el = render(this, el, ...args);
-            this.container.replaceChild(el, elOld);
+            if (elOld !== el)
+                this.container.replaceChild(el, elOld);
 
         } else {
             el = render(this, null, ...args);
             this.container.appendChild(el);
         }
 
-        if (typeof(index) === "number") {
+        if (typeof(index) === "number" &&
+            index > -1) {
             // Move the element to the given index.
-            this.rdom.move(el, index + this._cull.offset);
+            rdom.move(el, index + this._cull.offset);
         }
 
         // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
@@ -254,31 +289,7 @@ class RDOMCtx {
 
 class RDOM {
     constructor() {
-        /** @type {Map<HTMLElement, RDOMCtx>} */
-        this.contexts = new Map();
-
-        /** @type {HTMLElement} */
-        this._contextLastContainer = null;
-        /** @type {RDOMCtx} */
-        this._contextLast = null;
-
-        this.rd = this.rd.bind(this);
-    }
-
-    /**
-     * Gets or creates a [RDOMListCtx] for the given container element.
-     * @param {HTMLElement} container The container element to which elements will be added to.
-     * @returns {RDOMCtx} The RDOM list context for the container element.
-     */
-    ctx(container) {
-        if (this._contextLastContainer === container)
-            return this._contextLast;
-
-        this._contextLastContainer = container;
-        var ctx = this.contexts.get(container);
-        if (!ctx)
-            this.contexts.set(container, ctx = new RDOMCtx(this, container));
-        return this._contextLast = ctx;
+        this.rd$ = this.rd$.bind(this);
     }
 
     /**
@@ -337,19 +348,14 @@ class RDOM {
 
             if (c === "&")
                 n += "&amp;";
-
             else if (c === "<")
                 n += "&lt;";
-
             else if (c === ">")
                 n += "&gt;";
-
             else if (c === "\"")
                 n += "&quot;";
-
             else if (c === "'")
                 n += "&#039;";
-            
             else
                 n += c;
         }
@@ -369,7 +375,7 @@ class RDOM {
             if (c === "'")
                 n += "&#039;";
             else
-            n += c;
+                n += c;
         }
         
         return n;
@@ -381,8 +387,10 @@ class RDOM {
      * @param {...any} values
      * @returns {RDOMElement}
      */
-    rd(template, ...values) {
+    rd$(template, ...values) {
         let placeheld = [];
+        /** @type {function(RDOMElement)} */
+        let postprocessor = undefined;
         let html = template.reduce((prev, next, i) => {
             // TODO: optional escaping.
             // TODO: optional element preservation.
@@ -392,15 +400,21 @@ class RDOM {
                 // Keep expr as-is.
                 prev = prev.slice(0, -1);
 
+            } else if (prev[prev.length - 1] === "!" && val instanceof Function) {
+                // Postprocessor.
+                prev = prev.slice(0, -1);
+                postprocessor = val;
+                val = "";
+
             } else if (prev[prev.length - 1] === "?") {
-                // "Updateable."
+                // Settable / gettable field.
                 prev = prev.slice(0, -1);
                 val = `<rdom-field rdom-field-key="${this.escapeAttr(val)}"></rdom-field>`;
 
             } else if (val instanceof Node) {
                 // Replace elements with placeholders, which will be replaced later on.
                 placeheld[placeheld.length] = val;
-                val = "<rdom-placeholder>";
+                val = "<rdom-placeholder></rdom-placeholder>";
             
             } else if (prev[prev.length - 1] === "=") {
                 // Escape attributes.
@@ -411,6 +425,7 @@ class RDOM {
                 // Escape HTML.
                 val = this.escapeHTML(val);
             }
+            console.log(prev + val + next);
             return prev + val + next;
         });
 
@@ -422,10 +437,10 @@ class RDOM {
 
         el.rdomReplacePlaceholders(placeheld);
 
-        return el;
+        return postprocessor ? postprocessor(el) || el : el;
     }
 
 }
 
-var rdom = window["rdom"] = new RDOM();
-var rd = window["rd"] = rdom.rd;
+const rdom = window["rdom"] = new RDOM();
+const rd$ = window["rd$"] = rdom.rd$;

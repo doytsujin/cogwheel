@@ -10,7 +10,7 @@
   * @param {...any} args The generator, or a function returning the generator. If gen is a function returning the generator: Any arguments passed to the function preceed the function itself.
   * @returns A promise.
   */
-function yasync() {
+ const yasync = function() {
     let gen = arguments[arguments.length - 1];
     if (gen instanceof Function) {
         let self = arguments[0];

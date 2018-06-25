@@ -2,7 +2,7 @@
 
 // Work around @ts-check not knowing about globals.
 var jsyaml = jsyaml; // js-yaml
-var componentHandler = componentHandler; // mdl
+var mdc = mdc; // mdc
 
 // TODO: Move renderers away from metas.
 
@@ -16,8 +16,8 @@ class CogwheelMetaDef {
     render(ctx, el, value) {
         if (typeof(value) === "undefined" ||
             value === null)
-            return rd`<span>${value}</span>`;
-        return rd`<span>${value.constructor.name}: ${value}</span>`;
+            return rd$`<span>${value}</span>`;
+        return rd$`<span>${value.constructor.name}: ${value}</span>`;
     }
 }
 
@@ -28,9 +28,9 @@ class CogwheelMetaStringDef extends CogwheelMetaDef {
 }
 
 class CogwheelMetaChoiceDef extends CogwheelMetaDef {
-    constructor(path, comment, fallback, choices) {
+    constructor(path, comment, fallback, values) {
         super(path, comment, fallback);
-        this.choices = choices;
+        this.values = values;
     }
 }
 
