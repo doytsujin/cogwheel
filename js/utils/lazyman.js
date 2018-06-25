@@ -166,23 +166,26 @@ class LazyMan {
     /**
      * Lazy-load all resources (dependencies).
      * @param {any[]} deps The dependency list, accepting either the IDs / URLs or the parameters when calling load.
+     * @param {boolean} ordered Should the dependencies be loaded in order? Defaults to false.
      * @param {function(string)} [onfulfilled] The optional per-dependency resolve callback.
      * @param {function(string)} [onrejected] The optional per-dependency reject callback.
      * @returns {Promise<any[]>} A promise.
      */
-    all(deps, onfulfilled, onrejected) {
+    all(deps, ordered, onfulfilled, onrejected) {
         let all = [];
+        let pPrev = Promise.resolve();
         for (let dep of deps) {
             let p;
             if (typeof(dep) === "string") {
-                p = this.load(dep);
+                p = ordered ? pPrev.then(() => this.load(dep)) : this.load(dep);
                 p.then(() => onfulfilled(dep), () => onrejected(dep));
 
             } else {
                 // Arguments for load.
-                p = this.load.apply(this, dep);
+                p = ordered ? pPrev.then(() => this.load.apply(this, dep)) : this.load.apply(this, dep);
                 p.then(() => onfulfilled(dep[0]), () => onrejected(dep[0]));
             }
+            pPrev = p;
             all.push(p);
         }
         return Promise.all(all);

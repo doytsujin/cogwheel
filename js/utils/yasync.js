@@ -6,19 +6,21 @@
 
  /**
   * Run a generator function, faking async.
-  * @param {Generator | function() : Generator} gen The generator, or a function returning the generator.
   * @param {any} this If gen is a function returning the generator: The context in which the generator will run in.
-  * @param {...any} args If gen is a function returning the generator: Any arguments passed to the function.
+  * @param {...any} args The generator, or a function returning the generator. If gen is a function returning the generator: Any arguments passed to the function preceed the function itself.
   * @returns A promise.
   */
 function yasync() {
-    let gen = arguments[0];
+    let gen = arguments[arguments.length - 1];
     if (gen instanceof Function) {
+        let self = arguments[0];
         let args = Array.from(arguments);
-        args.splice(0, 2);
-        gen = arguments[0].apply(arguments[1], args);
+        args.splice(0, 1); // Remove this
+        args.splice(args.length - 1, 1); // Remove gen
+        gen = gen.apply(self, args);
     }
 
+    // @ts-ignore gen is a Generator.
     if (!gen || !gen.next)
         throw new Error("yasync didn't receive a generator");
 
@@ -29,6 +31,7 @@ function yasync() {
 
         let step = pr => {
             try {
+                // @ts-ignore gen is a Generator.
                 genr = gen.next(pr);
             } catch (e) {
                 console.error("[yasync]", "Uncatched:", e);

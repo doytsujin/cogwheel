@@ -121,8 +121,9 @@ main.mdl-layout__content {
     top: 0;
 }
 
-#editor > .rdom-wrapper > .property {
+#editor > .property {
     display: block;
+    position: relative;
     width: 100%;
     margin-bottom: 16px;
 }
@@ -133,10 +134,11 @@ main.mdl-layout__content {
     height: calc(20px + 24px + 16px);
     box-sizing: border-box;
 }
-#editor .property > .head > .key {
+#editor .property > .head .key {
     flex: 0 0 auto;
 }
-#editor .property > .head > .input {
+#editor .property > .head .input {
+    display: block;
     flex: 1 1 auto;
     margin-left: 16px;
     margin-top: 24px;

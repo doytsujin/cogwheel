@@ -1,5 +1,5 @@
 //@ts-check
-yasync(function*() {
+yasync(this, function*() {
     console.log("[boot]", "Waiting until DOM ready.");
     yield lazyman.load("DOM");
     console.log("[boot]", "DOM ready.");
@@ -36,7 +36,11 @@ yasync(function*() {
         [ "monaco-editor/loader.js", monacoVS + "/loader.js" ],
     ]
     let core = [
-        "cogwheel.js",
+        // Cogwheel depends on this.
+        "meta.js",
+        
+        // Cogwheel itself.
+        "cogwheel.js"
     ];
     let depsLength = depsBase.length + depsMonaco.length + core.length;
 
@@ -49,14 +53,14 @@ yasync(function*() {
             splashProgressBar.style.transform = `scaleX(1)`;
             return;
         }
-        splashProgressBar.style.transform = `scaleX(${loaded.size / depsLength * 0.5 + 0.5})`;
+        splashProgressBar.style.transform = `scaleX(${loaded.size / depsLength * 0.5})`;
     }
 
     // Wrapper around lazyman.all which runs updateProgress.
-    let load = deps => lazyman.all(
-        deps,
+    let load = (deps, ordered) => lazyman.all(
+        deps, ordered,
         id => updateProgress(id, true),
-        id => updateProgress(id, false)
+        id => updateProgress(id, false),
     );
 
     console.log("[boot]", "Loading Cogwheel and all dependencies.");
@@ -92,7 +96,7 @@ yasync(function*() {
     });
     console.log("[boot]", "Monaco loaded.");
 
-    yield load(core);
+    yield load(core, true);
     console.log("[boot]", "Cogwheel prepared.");
 
     yield cogwheel.load();

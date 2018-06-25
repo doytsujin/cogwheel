@@ -3,14 +3,102 @@
 /* RDOM (rotonde dom)
  * 0x0ade's collection of DOM manipulation functions because updating innerHTML every time a single thing changes isn't cool.
  * This started out as a mini framework for Rotonde.
- * Mostly oriented towards manipulating ordered collections, f.e. feeds.
+ * Mostly oriented towards manipulating paginated / culled ordered collections, f.e. feeds.
  */
+
+ /**
+  * Bind RDOM helpers to any given HTML element.
+  */
+ class RDOMElement extends HTMLElement {
+     /**
+      * @param {HTMLElement} el
+      */
+    constructor(el) {
+        // Prevent VS Code from complaining about the lack of super()
+        if (false) super();
+
+        if (el["isRDOM"])
+            // @ts-ignore
+            return el;
+        el["isRDOM"] = true;
+        
+        // Bind all functions from RDOMElement to the HTMLElement.
+        for (let name of Object.getOwnPropertyNames(RDOMElement.prototype)) {
+            if (name === "constructor")
+                continue;
+            el[name] = RDOMElement.prototype[name].bind(el);
+        }
+
+        // Return the modified HTMLElement.
+        // @ts-ignore
+        return el;
+    }
+
+    /**
+     * Replace all rdom-placeholder elements with the elements in the array.
+     * @param {HTMLElement[]} placeheld
+     */
+    rdomReplacePlaceholders(placeheld) {
+        let placeholders = this.getElementsByTagName("rdom-placeholder");
+        for (let i in placeheld) {
+            let placeholder = placeholders.item(0);
+            placeholder.parentNode.replaceChild(placeheld[i], placeholder);
+        }
+    }
+
+    /**
+     * Fill all rdom-field elements with the provided elements.
+     * @param {any} data
+     * @returns {RDOMElement}
+     */
+    rdomSet(data) {
+        for (let key in data) {
+            let value = data[key];
+            let field = this.querySelector(`rdom-field[rdom-field-key=${key}]`);
+            if (!field) {
+                // Field doesn't exist, warn the user.
+                console.warn("[rdom]", "rdom-field not found:", key, "in", this);
+                continue;
+            }
+            if (!value) {
+                // Value is false-ish, clear the field.
+                while (field.firstChild)
+                    field.removeChild(field.firstChild);
+                continue;
+            }
+
+            // Remove all other children and remove the last remaining child,
+            // or append the value as the first child.
+            let children = field.children;
+            while (children.length > 1)
+                field.removeChild(children.item(1));
+            if (field.firstChild)
+                field.replaceChild(value, field.firstChild);
+            else
+                field.appendChild(value);
+        }
+
+        return this;
+    }
+
+    /**
+     * Get the value of the rdom-field with the given key.
+     * @param {string} key
+     * @returns {RDOMElement}
+     */
+    rdomGet(key) {
+        let field = this.querySelector(`rdom-field[rdom-field-key=${key}]`);
+        if (!field)
+            return null;
+        //@ts-ignore
+        return field.firstElementChild;
+    }
+ }
 
 /**
  * A RDOM context.
  */
 class RDOMCtx {
-
     /**
      * @param {RDOM} rdom
      * @param {HTMLElement} container 
@@ -32,31 +120,26 @@ class RDOMCtx {
         /** 
          * List of previously added elements.
          * This list will be checked against [added] on cleanup, ensuring that any zombies will be removed properly.
-         * @type {HTMLElement[]}
+         * @type {RDOMElement[]}
          */
         this.prev = [];
         /**
          * List of [rdom.add]ed elements.
          * This list will be used and reset in [rdom.cleanup].
-         * @type {HTMLElement[]}
+         * @type {RDOMElement[]}
          */
         this.added = [];
 
         /**
          * All current element -> object mappings.
-         * @type {Map<HTMLElement, any>}
+         * @type {Map<RDOMElement, any>}
          */
         this.references = new Map();
         /**
          * All current object -> element mappings.
-         * @type {Map<any, HTMLElement>}
+         * @type {Map<any, RDOMElement>}
          */
         this.elements = new Map();
-        /**
-         * All current object -> HTML source mappings, avoiding the slow innerHTML comparison.
-         * @type {Map<any, string>}
-         */
-        this.htmls = new Map();
     }
     
     /**
@@ -80,76 +163,42 @@ class RDOMCtx {
 
     /**
      * Adds or updates an element at the given index.
-     * For best performance in paginated / culled containers, pass a function as [html]. It only gets used if the element is visible.
      * This function needs a reference object so that it can find and update existing elements for any given object.
-     * For example:
-     * When adding entries to a list, [ref] is the entry being added.
-     * Instead of blindly clearing the list and re-adding all entries, this checks if an element for the entry exists and updates it.
      * @param {any} ref The reference object belonging to the element.
-     * @param {number} index The index at which the element will be added.
-     * @param {function | string} html The element itself in its string form, or its generator.
-     * @returns {HTMLElement} The created / updated wrapper element.
+     * @param {function(RDOMCtx, RDOMElement, ...any) : RDOMElement} render The element renderer.
+     * @param {number} [index] The index at which the element will be added.
+     * @returns {RDOMElement} The created / updated wrapper element.
      */
-    add(ref, index, html) {
-        // Let's hope that making this method async doesn't break culling.
+    add(ref, render, index, ...args) {
         if (this._cull.active && (index < this._cull.min || this._cull.max <= index)) {
             // Out of bounds - remove if existing, don't add.
             this.removeRef(ref);
             return null;
         }
 
-        /** @type {string | HTMLElement} */
-        var el;
-        if (typeof(html) === "object") {
-            // Assume that we're adding an element directly.
-            el = html;
-            // Replace any existing element with the new one.
-            this.removeRef(ref);
-            this.container.appendChild(el);
+        // Check if we already added an element for ref.
+        // If so, update it. Otherwise create and add a new element.
+        let el = this.elements.get(ref);
+        if (el) {
+            let elOld = el;
+            el = render(this, el, ...args);
+            this.container.replaceChild(el, elOld);
 
         } else {
-            // Assume that we're given the html contents of the element.
-            if (typeof(html) === "function") {
-                // If we're given a function, call it now.
-                // We don't need its result if the element's culled away.
-                html = html();
-            }
-            // Check if we already added an element for ref.
-            // If so, update it. Otherwise create and add a new element.
-            el = this.elements.get(ref);
-            if (!el) {
-                // The element isn't existing yet; create and add it.
-                var range = document.createRange();
-                range.selectNode(this.container);
-                // @ts-ignore el is guaranteed to be a HTMLElement.
-                el = range.createContextualFragment(`<span class='rdom-wrapper'>${html}</span>`).firstElementChild;
-                // @ts-ignore el is guaranteed to be a HTMLElement.
-                this.container.appendChild(el);
-            } else if (this.htmls.get(ref) !== html) {
-                // Update the innerHTML of our thin wrapper.
-                // @ts-ignore html is guaranteed to be a string.
-                el.innerHTML = html;
-            }
+            el = render(this, null, ...args);
+            this.container.appendChild(el);
         }
 
-        if (index > -1) {
+        if (typeof(index) === "number") {
             // Move the element to the given index.
-            // @ts-ignore el is guaranteed to be a ChildNode.
             this.rdom.move(el, index + this._cull.offset);
         }
 
-        // Register the element as "added:" It's not a zombie.
-        // @ts-ignore el is guaranteed to be a HTMLElement.
+        // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
         this.added.push(el);
         // Register the element as the element of ref.
-        // @ts-ignore el is guaranteed to be a HTMLElement.
         this.references.set(el, ref);
-        // @ts-ignore el is guaranteed to be a HTMLElement.
         this.elements.set(ref, el);
-        // @ts-ignore html is guaranteed to be a string.
-        this.htmls.set(ref, html);
-
-        // @ts-ignore el is guaranteed to be a HTMLElement.
         return el;
     }
 
@@ -166,14 +215,13 @@ class RDOMCtx {
         // Remove the element and all related object references from the context.
         this.elements.delete(ref);
         this.references.delete(el);
-        this.htmls.delete(ref);
         // Remove the element from the DOM.
         el.remove();
     }
 
     /**
      * Remove an element from this context, both the element in the DOM and all references in RDOM.
-     * @param {HTMLElement} el The element to remove.
+     * @param {RDOMElement} el The element to remove.
      */
     removeElement(el) {
         if (!el)
@@ -184,7 +232,6 @@ class RDOMCtx {
         // Remove the element and all related object references from the context.
         this.references.delete(el);
         this.elements.delete(ref);
-        this.htmls.delete(ref);
         // Remove the element from the DOM.
         el.remove();
     }
@@ -206,7 +253,6 @@ class RDOMCtx {
 }
 
 class RDOM {
-
     constructor() {
         /** @type {Map<HTMLElement, RDOMCtx>} */
         this.contexts = new Map();
@@ -215,6 +261,8 @@ class RDOM {
         this._contextLastContainer = null;
         /** @type {RDOMCtx} */
         this._contextLast = null;
+
+        this.rd = this.rd.bind(this);
     }
 
     /**
@@ -278,6 +326,106 @@ class RDOM {
         }
     }
 
+    /** Escapes the string into a HTML - safe format. */
+    escapeHTML(m) {
+        if (!m)
+            return m;
+
+        var n = "";
+        for (var i = 0; i < m.length; i++) {
+            var c = m[i];
+
+            if (c === "&")
+                n += "&amp;";
+
+            else if (c === "<")
+                n += "&lt;";
+
+            else if (c === ">")
+                n += "&gt;";
+
+            else if (c === "\"")
+                n += "&quot;";
+
+            else if (c === "'")
+                n += "&#039;";
+            
+            else
+                n += c;
+        }
+        
+        return n;
+    }
+
+    /** Escapes the string into a HTML attribute - safe format. */
+    escapeAttr(m) {
+        if (!m)
+            return m;
+
+        var n = "";
+        for (var i = 0; i < m.length; i++) {
+            var c = m[i];
+            // This assumes that all attributes are wrapped in '', never "".
+            if (c === "'")
+                n += "&#039;";
+            else
+            n += c;
+        }
+        
+        return n;
+    }
+
+    /**
+     * Parse a template string into a HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
+     * @param {TemplateStringsArray} template
+     * @param {...any} values
+     * @returns {RDOMElement}
+     */
+    rd(template, ...values) {
+        let placeheld = [];
+        let html = template.reduce((prev, next, i) => {
+            // TODO: optional escaping.
+            // TODO: optional element preservation.
+            let val = values[i - 1];
+
+            if (prev[prev.length - 1] === "$") {
+                // Keep expr as-is.
+                prev = prev.slice(0, -1);
+
+            } else if (prev[prev.length - 1] === "?") {
+                // "Updateable."
+                prev = prev.slice(0, -1);
+                val = `<rdom-field rdom-field-key="${this.escapeAttr(val)}"></rdom-field>`;
+
+            } else if (val instanceof Node) {
+                // Replace elements with placeholders, which will be replaced later on.
+                placeheld[placeheld.length] = val;
+                val = "<rdom-placeholder>";
+            
+            } else if (prev[prev.length - 1] === "=") {
+                // Escape attributes.
+                if (val instanceof Array)
+                    val = val.join(" ");
+                val = `"${this.escapeAttr(val)}"`;
+            } else {
+                // Escape HTML.
+                val = this.escapeHTML(val);
+            }
+            return prev + val + next;
+        });
+
+        var tmp = document.createElement("template");
+        tmp.innerHTML = html;
+        /** @type {RDOMElement} */
+        // @ts-ignore
+        let el = new RDOMElement(tmp.content.cloneNode(true).firstElementChild);
+
+        el.rdomReplacePlaceholders(placeheld);
+
+        return el;
+    }
+
 }
 
 var rdom = window["rdom"] = new RDOM();
+var rd = window["rd"] = rdom.rd;

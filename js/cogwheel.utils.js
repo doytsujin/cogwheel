@@ -5,55 +5,6 @@ String.prototype.trimEnd = String.prototype.trimEnd || String.prototype.trimRigh
     return this.slice(0, end);
 };
 
-// Escapes the string into a HTML - safe format.
-function escapeHTML(m) {
-    if (!m)
-      return m;
-
-    var n = "";
-    for (var i = 0; i < m.length; i++) {
-        var c = m[i];
-
-        if (c === "&")
-            n += "&amp;";
-
-        else if (c === "<")
-            n += "&lt;";
-
-        else if (c === ">")
-            n += "&gt;";
-
-        else if (c === "\"")
-            n += "&quot;";
-
-        else if (c === "'")
-            n += "&#039;";
-          
-        else
-            n += c;
-    }
-    
-    return n;
-}
-
-// Escapes the string into a HTML attribute - safe format.
-function escapeAttr(m) {
-    if (!m)
-        return m;
-
-    var n = "";
-    for (var i = 0; i < m.length; i++) {
-        var c = m[i];
-        // This assumes that all attributes are wrapped in '', never "".
-        if (c === "'")
-            n += "&#039;";
-        else
-          n += c;
-    }
-    
-    return n;
-}
-
 /**
  * @param {HTMLElement} main
  * @param {HTMLElement} divider
