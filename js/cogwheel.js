@@ -99,9 +99,12 @@ class Cogwheel {
         this.renderers = {};
 
         // Initialize the divider before anything else to prevent the layout from changing.
-        registerDividerH(document.getElementById("extra"), document.getElementById("extra-divider"), true, () => {
-            this.monacoEditor.layout();
-        });
+        registerDividerH(
+            document.getElementById("editor"),
+            document.getElementById("extra"),
+            document.getElementById("extra-divider"), 
+            () => this.monacoEditor.layout()
+        );
 
         // Initialize Monaco editor.
         this.monacoModel = monaco.editor.createModel(``, "yaml");

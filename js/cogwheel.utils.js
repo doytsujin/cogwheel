@@ -6,25 +6,29 @@ String.prototype.trimEnd = String.prototype.trimEnd || String.prototype.trimRigh
 };
 
 /**
- * @param {HTMLElement} main
+ * @param {HTMLElement} left
+ * @param {HTMLElement} right
  * @param {HTMLElement} divider
- * @param {boolean} [flip]
  * @param {function} [cb]
  */
-function registerDividerH(main, divider, flip, cb) {
+function registerDividerH(left, right, divider, cb) {
     let isDraggingDivider = false;
     let dragStart;
-    let lastWidth;
+    let leftLastWidth;
+    let rightLastWidth;
 
-    main.style.width = `${main.getBoundingClientRect().width}px`;
-    main.style.flexGrow = "0";
+    left.style.width = `${left.getBoundingClientRect().width}px`;
+    left.style.flexGrow = "0";
+    right.style.width = `${right.getBoundingClientRect().width}px`;
+    right.style.flexGrow = "0";
 
     document.addEventListener("mousedown", e => {
         if (!(isDraggingDivider = e.target === divider))
             return;
         e.preventDefault();
         
-        lastWidth = main.getBoundingClientRect().width;
+        leftLastWidth = left.getBoundingClientRect().width;
+        rightLastWidth = right.getBoundingClientRect().width;
         divider.classList.add("dragging");
         dragStart = e.pageX;
     });
@@ -34,7 +38,8 @@ function registerDividerH(main, divider, flip, cb) {
             return;
         e.preventDefault();
 
-        main.style.width = `${lastWidth + (flip ? -1 : 1) * (e.pageX - dragStart)}px`;
+        left.style.width = `${leftLastWidth + e.pageX - dragStart}px`;
+        right.style.width = `${rightLastWidth - e.pageX + dragStart}px`;
         if (cb)
             cb();
     });
