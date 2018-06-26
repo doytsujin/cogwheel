@@ -8,24 +8,32 @@ class CogwheelSession {
     /**
      * @param {Cogwheel} cogwheel
      * @param {CogwheelMetaFormat} format
-     * @param {string} [yamlText]
+     * @param {any} [yaml]
      */
-    constructor(cogwheel, format, yamlText) {
+    constructor(cogwheel, format, yaml) {
         this.cogwheel = cogwheel;
         this.format = format;
 
-        this.yamlText = yamlText || "";
-        if (!this.yamlText && format)
-            this.yamlText = format.example;        
+        this.rendering = 0;
+
+        if (!yaml)
+            this.yamlText = format.example;
+        else if (typeof(yaml) === "string")
+            this.yamlText = yaml;
+        else
+            this.yaml = yaml;
     }
 
-    get yamlObj() {
-        if (this._yamlTextLast === this.yamlText)
-            return this._yamlObjLast;
-        return this._yamlObjLast = jsyaml.safeLoad(this._yamlTextLast = this.yamlText);
+    get yamlText() {
+        return this.format.buildText(this.yaml);
+    }
+    set yamlText(value) {
+        this.yaml = jsyaml.safeLoad(value);
     }
 
-    render(editorCtx) {
+    renderEditor(editorCtx) {
+        this.rendering++;
+
         /**
          * @param {RDOMCtx} ctx
          * @param {any} defs
@@ -36,17 +44,22 @@ class CogwheelSession {
                 /** @type {CogwheelMetaDef} */
                 let def = defs[key];
 
+                // TODO: Move to nestable CogwheelMetaDef renderer.
                 let el = ctx.add(def.path, -1, (ctx, propEl) => {
                     propEl = propEl ||
                     rd$`<div class="property">
                             <h3 class="key mdc-typography--subtitle1">${key}:</h3>
-                            ${def.comment ? rd$`<p class="description mdc-typography--body2">${def.comment}</p>` : ``}
+                            ${def.comment ? rd$`<span class="description mdc-typography--caption">${def.comment}</span>` : ``}
                             ?${"input"}
                         </div>`;
                     
                     let input = this.cogwheel.render(
                         def, ctx, propEl.rdomGet("input"),
-                        values[key], /* TODO: Handler */ null
+                        values[key],
+                        (e, def, v) => {
+                            values[key] = v;
+                            this.renderCode();
+                        }
                     );
                     propEl.rdomSet({
                         "input": input
@@ -64,8 +77,17 @@ class CogwheelSession {
             }
         }
 
-        crawl(editorCtx, this.format.defs, this.yamlObj);
+        crawl(editorCtx, this.format.defs, this.yaml);
         editorCtx.cleanup();
+
+        this.rendering--;
+    }
+
+    renderCode() {
+        this.rendering++;
+        // TODO: diff and apply diff.
+        this.cogwheel.monacoModel.setValue(this.yamlText);
+        this.rendering--;
     }
 }
 
@@ -142,18 +164,21 @@ class Cogwheel {
         });
     }
 
+    /** @return {CogwheelSession} */
     get session() {
         return this._session;
     }
     set session(value) {
         this._session = value;
         this.monacoModel = monaco.editor.createModel(this._session.yamlText, "yaml");
-        this.monacoModel.onDidChangeContent(event => {
+        this.monacoModel.onDidChangeContent(e => {
+            if (this.session.rendering)
+                return;
             this.session.yamlText = this.monacoModel.getValue();
-            this.renderRoot();
+            this.session.renderEditor(this.editorCtx);
         });
         this.monacoEditor.setModel(this.monacoModel);
-        this.renderRoot();
+        this.session.renderEditor(this.editorCtx);
     }
 
     initSessionFromRemoteDoc(format, url) {
@@ -162,10 +187,6 @@ class Cogwheel {
             let text = yield lazyman.load(url, "", "txt");
             return this.session = new CogwheelSession(this, format, text);
         });
-    }
-
-    renderRoot() {
-        this.session.render(this.editorCtx);
     }
 
     /**

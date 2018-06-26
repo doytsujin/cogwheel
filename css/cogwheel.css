@@ -128,11 +128,27 @@ main {
     top: 0;
 }
 
-#editor > .property {
+#editor .property {
     display: block;
     position: relative;
     width: 100%;
     margin-bottom: 16px;
 }
-#editor .property .input {
+#editor .property .key {
+    margin-bottom: 0;
+}
+#editor .property .input-wrap {
+    width: 100%;
+    padding-left: 40px;
+    margin-top: 0;
+}
+#editor .property .input-wrap .input-entry {
+    width: 100%;
+}
+#editor .property .input-wrap .input-entry.mdc-text-field {
+    margin-left: 12px;
+}
+
+.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder {
+    color: rgba(0, 0, 0, 0.6);
 }

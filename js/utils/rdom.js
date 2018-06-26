@@ -30,8 +30,11 @@
         }
 
         // Return the modified HTMLElement.
-        // @ts-ignore
-        return el;
+        if (!el)
+            return null;
+        if (el)
+            // @ts-ignore
+            return el;
 
         // Fields.
         this.isRDOM = true;
@@ -73,12 +76,16 @@
             // Remove all other children and remove the last remaining child,
             // or append the value as the first child.
             let children = field.children;
-            while (children.length > 1)
+            while (children.length > 1) {
                 field.removeChild(children.item(1));
-            if (field.firstChild)
-                field.replaceChild(value, field.firstChild);
-            else
+            }
+            let left = field.firstChild;
+            if (left) {
+                if (left !== value)
+                    field.replaceChild(value, left);
+            } else {
                 field.appendChild(value);
+            }
         }
 
         return this;
@@ -105,26 +112,29 @@
     /**
      * @param {HTMLElement} el
      */
-   constructor(el) {
-       // Prevent VS Code from complaining about the lack of super()
-       if (false) super();
+    constructor(el) {
+        // Prevent VS Code from complaining about the lack of super()
+        if (false) super();
 
-       if (el["isRDOMCtx"])
-           // @ts-ignore
-           return el;
-       el["isRDOMCtx"] = true;
-       
-       // @ts-ignore
-       el["rdomCtx"] = new RDOMCtx(el);
+        if (el["isRDOMCtx"])
+            // @ts-ignore
+            return el;
+        el["isRDOMCtx"] = true;
+        
+        // @ts-ignore
+        el["rdomCtx"] = new RDOMCtx(el);
 
-       // Return the modified HTMLElement.
-       // @ts-ignore
-       return el;
+        // Return the modified HTMLElement.
+        if (!el)
+            return null;
+        if (el)
+            // @ts-ignore
+            return el;
 
-       // Fields.
-       /** @type {RDOMCtx} */
-       this.rdomCtx = null;
-   }
+        // Fields.
+        /** @type {RDOMCtx} */
+        this.rdomCtx = null;
+    }
 }
 
 /**
@@ -289,6 +299,7 @@ class RDOMCtx {
 
 class RDOM {
     constructor() {
+        this._genID = 0;
         this.rd$ = this.rd$.bind(this);
     }
 
@@ -381,6 +392,11 @@ class RDOM {
         return n;
     }
 
+    /** Generates an unique ID. */
+    genID() {
+        return `rdom-id-${++this._genID}`;
+    }
+
     /**
      * Parse a template string into a HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
      * @param {TemplateStringsArray} template
@@ -388,56 +404,73 @@ class RDOM {
      * @returns {RDOMElement}
      */
     rd$(template, ...values) {
-        let placeheld = [];
-        /** @type {function(RDOMElement)} */
-        let postprocessor = undefined;
-        let html = template.reduce((prev, next, i) => {
-            // TODO: optional escaping.
-            // TODO: optional element preservation.
-            let val = values[i - 1];
+        try {
+            let placeheld = [];
+            /** @type {function(RDOMElement)} */
+            let postprocessor = undefined;
+            let ids = {};
+            let html = template.reduce((prev, next, i) => {
+                let val = values[i - 1];
 
-            if (prev[prev.length - 1] === "$") {
-                // Keep expr as-is.
-                prev = prev.slice(0, -1);
+                if (prev[prev.length - 1] === "$") {
+                    // Keep value as-is.
+                    prev = prev.slice(0, -1);
+                    return prev + val + next;
+                }
 
-            } else if (prev[prev.length - 1] === "!" && val instanceof Function) {
-                // Postprocessor.
-                prev = prev.slice(0, -1);
-                postprocessor = val;
-                val = "";
+                if (prev[prev.length - 1] === ":") {
+                    // Command.
+                    prev = prev.slice(0, -1);
+                    if (val.startsWith("id:")) {
+                        let idKey = val.slice(3);
+                        val = ids[idKey];
+                        if (!val)
+                            val = ids[idKey] = rdom.genID();
+                    }
+                }
+                
+                if (prev[prev.length - 1] === ">" && val instanceof Function) {
+                    // Postprocessor.
+                    prev = prev.slice(0, -1);
+                    postprocessor = val;
+                    val = "";
 
-            } else if (prev[prev.length - 1] === "?") {
-                // Settable / gettable field.
-                prev = prev.slice(0, -1);
-                val = `<rdom-field rdom-field-key="${this.escapeAttr(val)}"></rdom-field>`;
+                } else if (prev[prev.length - 1] === "?") {
+                    // Settable / gettable field.
+                    prev = prev.slice(0, -1);
+                    val = `<rdom-field rdom-field-key="${this.escapeAttr(val)}"></rdom-field>`;
 
-            } else if (val instanceof Node) {
-                // Replace elements with placeholders, which will be replaced later on.
-                placeheld[placeheld.length] = val;
-                val = "<rdom-placeholder></rdom-placeholder>";
-            
-            } else if (prev[prev.length - 1] === "=") {
-                // Escape attributes.
-                if (val instanceof Array)
-                    val = val.join(" ");
-                val = `"${this.escapeAttr(val)}"`;
-            } else {
-                // Escape HTML.
-                val = this.escapeHTML(val);
-            }
-            console.log(prev + val + next);
-            return prev + val + next;
-        });
+                } else if (val instanceof Node) {
+                    // Replace elements with placeholders, which will be replaced later on.
+                    placeheld[placeheld.length] = val;
+                    val = "<rdom-placeholder></rdom-placeholder>";
+                
+                } else if (prev[prev.length - 1] === "=") {
+                    // Escape attributes.
+                    if (val instanceof Array)
+                        val = val.join(" ");
+                    val = `"${this.escapeAttr(val)}"`;
 
-        var tmp = document.createElement("template");
-        tmp.innerHTML = html;
-        /** @type {RDOMElement} */
-        // @ts-ignore
-        let el = new RDOMElement(tmp.content.cloneNode(true).firstElementChild);
+                } else {
+                    // Escape HTML.
+                    val = this.escapeHTML(val);
+                }
+                return prev + val + next;
+            });
 
-        el.rdomReplacePlaceholders(placeheld);
+            var tmp = document.createElement("template");
+            tmp.innerHTML = html;
+            /** @type {RDOMElement} */
+            // @ts-ignore
+            let el = new RDOMElement(tmp.content.firstElementChild);
 
-        return postprocessor ? postprocessor(el) || el : el;
+            el.rdomReplacePlaceholders(placeheld);
+
+            return postprocessor ? postprocessor(el) || el : el;
+        } catch (e) {
+            console.error("[rdom]", "rd$ failed parsing", String.raw(template, values), e);
+            throw e;
+        }
     }
 
 }

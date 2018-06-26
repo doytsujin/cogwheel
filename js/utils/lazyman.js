@@ -127,8 +127,8 @@ class LazyMan {
             url = id;
         
         if (!type) {
-            let indexOfEnding = url.lastIndexOf(".");
-            type = url.slice(indexOfEnding + 1);
+            let indexOfEnding = id.lastIndexOf(".");
+            type = id.slice(indexOfEnding + 1);
         }
 
         let indexOfProtocol = url.indexOf("://");

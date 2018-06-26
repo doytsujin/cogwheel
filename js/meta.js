@@ -4,20 +4,11 @@
 var jsyaml = jsyaml; // js-yaml
 var mdc = mdc; // mdc
 
-// TODO: Move renderers away from metas.
-
 class CogwheelMetaDef {
     constructor(path, comment, fallback) {
         this.path = path;
         this.comment = comment;
         this.fallback = fallback;
-    }
-
-    render(ctx, el, value) {
-        if (typeof(value) === "undefined" ||
-            value === null)
-            return rd$`<span>${value}</span>`;
-        return rd$`<span>${value.constructor.name}: ${value}</span>`;
     }
 }
 
