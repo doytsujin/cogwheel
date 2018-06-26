@@ -459,10 +459,18 @@ class RDOM {
             });
 
             var tmp = document.createElement("template");
-            tmp.innerHTML = html;
+            tmp.innerHTML = html.trim();
             /** @type {RDOMElement} */
             // @ts-ignore
-            let el = new RDOMElement(tmp.content.firstElementChild);
+            let el = tmp.content.firstElementChild;
+            if (!el) {
+                // Workaround for MS Edge from 2016 spitting out null for spans, among other things.
+                tmp = document.createElement("div");
+                tmp.innerHTML = html.trim();
+                // @ts-ignore
+                el = tmp.firstChild;
+            }
+            el = new RDOMElement(el);
 
             el.rdomReplacePlaceholders(placeheld);
 
