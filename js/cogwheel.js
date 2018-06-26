@@ -40,6 +40,7 @@ class CogwheelSession {
          * @param {any} values
          */
         let crawl = (ctx, defs, values) => {
+            let onchange = (ctx["onchange"] = ctx["onchange"] || {});
             for (let key in defs) {
                 /** @type {CogwheelMetaDef} */
                 let def = defs[key];
@@ -53,13 +54,14 @@ class CogwheelSession {
                             ?${"input"}
                         </div>`;
                     
+                    onchange[def.path] = (e, def, v) => {
+                        values[key] = v;
+                        this.renderCode();
+                    }
+                    
                     let input = this.cogwheel.render(
-                        def, ctx, propEl.rdomGet("input"),
-                        values[key],
-                        (e, def, v) => {
-                            values[key] = v;
-                            this.renderCode();
-                        }
+                        ctx, propEl.rdomGet("input"),
+                        def, values[key]
                     );
                     propEl.rdomSet({
                         "input": input
@@ -192,7 +194,7 @@ class Cogwheel {
     /**
      * @returns {RDOMElement}
      */
-    render(ref, ctx, el, ...args) {
+    render(ctx, el, ref, ...args) {
         if (!ref)
             return null;
         let render = this.renderers[ref.constructor.name];

@@ -1,6 +1,9 @@
 :root {
     --mdc-theme-primary: #000000;
 }
+.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder {
+    color: rgba(0, 0, 0, 0.6);
+}
 
 a {
     cursor: pointer;
@@ -145,10 +148,6 @@ main {
 #editor .property .input-wrap .input-entry {
     width: 100%;
 }
-#editor .property .input-wrap .input-entry.mdc-text-field {
+#editor .property .input-wrap > .input-entry.mdc-text-field {
     margin-left: 12px;
-}
-
-.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder {
-    color: rgba(0, 0, 0, 0.6);
 }

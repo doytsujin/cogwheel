@@ -11,7 +11,7 @@ var mdc = mdc; // mdc
  * @param {CogwheelMetaStringDef} def
  * @param {RDOMElement} el
  */
-cogwheel.renderers[CogwheelMetaStringDef.name] = (ctx, el, def, v, cb) => {
+cogwheel.renderers[CogwheelMetaStringDef.name] = (ctx, el, def, v) => {
     el = el ||
     rd$`<div class="input-wrap">
             <div class="input input-entry mdc-text-field">
@@ -22,13 +22,12 @@ cogwheel.renderers[CogwheelMetaStringDef.name] = (ctx, el, def, v, cb) => {
         </div>
         >${inputEl => {
             inputEl.MDCTextField = new mdc.textField.MDCTextField(inputEl);
-            if (cb)
-                inputEl.addEventListener("input", e => cb(e, def, e.target.value), false);
+            inputEl.addEventListener("input", e => ctx["onchange"][def.path](e, def, e.target.value), false);
         }}`;
     
     let input = el.getElementsByTagName("input")[0];
     input.value = v;
-    
+
     return el;
 }
 
@@ -37,7 +36,7 @@ cogwheel.renderers[CogwheelMetaStringDef.name] = (ctx, el, def, v, cb) => {
  * @param {CogwheelMetaBooleanDef} def
  * @param {RDOMElement} el
  */
-cogwheel.renderers[CogwheelMetaBooleanDef.name] = (ctx, el, def, v, cb) => {
+cogwheel.renderers[CogwheelMetaBooleanDef.name] = (ctx, el, def, v) => {
     el = el ||
     rd$`<div class="input-wrap mdc-form-field">
             <div class="input input-entry mdc-checkbox">
@@ -56,8 +55,7 @@ cogwheel.renderers[CogwheelMetaBooleanDef.name] = (ctx, el, def, v, cb) => {
             let inputEl = fieldEl.getElementsByClassName("input")[0];
             let input = inputEl.MDCCheckbox = new mdc.checkbox.MDCCheckbox(inputEl);
             field.input = input;
-            if (cb)
-                inputEl.addEventListener("change", e => cb(e, def, e.target.checked), false);
+            inputEl.addEventListener("change", e => ctx["onchange"][def.path](e, def, e.target.checked), false);
         }}`;
     
     let input = el.getElementsByTagName("input")[0];
@@ -72,7 +70,7 @@ cogwheel.renderers[CogwheelMetaBooleanDef.name] = (ctx, el, def, v, cb) => {
  * @param {CogwheelMetaChoiceDef} def
  * @param {RDOMElement} listEl
  */
-cogwheel.renderers[CogwheelMetaChoiceDef.name] = (parentCtx, listEl, def, v, cb) => {
+cogwheel.renderers[CogwheelMetaChoiceDef.name] = (parentCtx, listEl, def, v) => {
     let listCtx = new RDOMContainer(listEl = listEl || rd$`<ul class="input-wrap"></ul>`).rdomCtx;
     let name = def.path.join(".");
 
@@ -95,12 +93,11 @@ cogwheel.renderers[CogwheelMetaChoiceDef.name] = (parentCtx, listEl, def, v, cb)
                     let inputEl = fieldEl.getElementsByClassName("input")[0];
                     let input = inputEl.MDCRadio = new mdc.radio.MDCRadio(inputEl);
                     field.input = input;
-                    if (cb)
-                        inputEl.addEventListener("change", e => {
-                            if (!e.target.checked)
-                                return;
-                            cb(e, def, def.values[i]);
-                        }, false);
+                    inputEl.addEventListener("change", e => {
+                        if (!e.target.checked)
+                            return;
+                        parentCtx["onchange"][def.path](e, def, def.values[i]);
+                    }, false);
                 }}`;
             
             let input = el.getElementsByTagName("input")[0];
