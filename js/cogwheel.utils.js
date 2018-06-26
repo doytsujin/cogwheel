@@ -14,8 +14,8 @@ String.prototype.trimEnd = String.prototype.trimEnd || String.prototype.trimRigh
 function registerDividerH(left, right, divider, cb) {
     let isDraggingDivider = false;
     let dragStart;
-    let leftLastWidth;
-    let rightLastWidth;
+    let parentOffs;
+    let parentSize;
 
     left.style.width = `${left.getBoundingClientRect().width}px`;
     left.style.flexGrow = "0";
@@ -27,27 +27,32 @@ function registerDividerH(left, right, divider, cb) {
             return;
         e.preventDefault();
         
-        leftLastWidth = left.getBoundingClientRect().width;
-        rightLastWidth = right.getBoundingClientRect().width;
+        parentOffs = left.parentElement.clientLeft;
+        parentSize = left.parentElement.clientWidth;
+
         divider.classList.add("dragging");
         dragStart = e.pageX;
-    });
+    }, false);
     
     document.addEventListener("mousemove", e => {
         if (!isDraggingDivider)
             return;
         e.preventDefault();
-
-        left.style.width = `${leftLastWidth + e.pageX - dragStart}px`;
-        right.style.width = `${rightLastWidth - e.pageX + dragStart}px`;
+        
+        left.style.width = `${100 * e.pageX / parentSize}%`;
+        right.style.width = `${100 - 100 * e.pageX / parentSize}%`;
+        
         if (cb)
             cb();
-    });
+    }, false);
+
+    if (cb)
+        window.addEventListener("resize", e => cb(), false);
     
     document.addEventListener("mouseup", e => {
         if (isDraggingDivider)
             e.preventDefault();
         divider.classList.remove("dragging");
         isDraggingDivider = false;
-    });
+    }, false);
 }
