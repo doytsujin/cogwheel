@@ -26,8 +26,8 @@ yasync(this, function*() {
         // https://material.io/develop/web/docs/getting-started/
         [ "materialicons.css", "https://fonts.googleapis.com/icon?family=Material+Icons" ],
         [ "Roboto.css", "https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700" ],
-        "https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css",
-        "https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js",
+        "https://unpkg.com/material-components-web@0.36/dist/material-components-web.min.css",
+        "https://unpkg.com/material-components-web@0.36/dist/material-components-web.min.js",
 
         "cogwheel.css",
         "cogwheel.utils.js",
